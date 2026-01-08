@@ -118,8 +118,8 @@ def formatar_numeros(nums: list[int]) -> str:
     return " ".join(f"{n:02d}" for n in nums)
 
 
-st.set_page_config(page_title="Lotofácil — Conferidor", layout="centered")
-st.title("Conferidor de Jogos da Lotofácil")
+st.set_page_config(page_title="Lotofácil 2026", layout="centered")
+st.title("Lucas - Henrique - Bruno - Sérgio")
 
 use_ultimo = st.checkbox("Usar último concurso", value=True)
 
@@ -170,4 +170,5 @@ if st.button("Conferir", type="primary"):
             st.write(f"**Total ganho (somando os 4 jogos):** {formatar_moeda_br(total)}")
 
         except Exception as e:
+
             st.error(f"Erro: {e}")
