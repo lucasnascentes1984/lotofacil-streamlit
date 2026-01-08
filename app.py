@@ -1,15 +1,17 @@
 import streamlit as st
 import requests
+from typing import List, Optional
+
 
 # Jogos fixos da Lotofácil
-GAMES = [
+GAMES: List[List[int]] = [
     [2, 3, 4, 6, 7, 8, 11, 12, 14, 16, 17, 18, 21, 22, 23],
     [1, 4, 5, 8, 9, 10, 12, 13, 15, 19, 20, 22, 23, 24, 25],
     [1, 2, 4, 6, 7, 8, 9, 12, 13, 17, 18, 21, 22, 23, 24],
     [2, 4, 5, 6, 7, 8, 10, 14, 16, 18, 19, 20, 21, 24, 25],
 ]
 
-BASE_URLS = [
+BASE_URLS: List[str] = [
     "https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil",
     "https://www.caixa.gov.br/loterias/_cache/webapi/lotofacil",
 ]
@@ -36,7 +38,7 @@ def _to_float_brasil(valor) -> float:
         return 0.0
 
 
-def _headers():
+def _headers() -> dict:
     return {"Accept": "application/json", "User-Agent": "Mozilla/5.0"}
 
 
@@ -45,7 +47,7 @@ def _is_json_response(resp: requests.Response) -> bool:
     return "json" in content_type
 
 
-def buscar_resultado(concurso: int | None) -> dict:
+def buscar_resultado(concurso: Optional[int]) -> dict:
     last_error = None
 
     for base in BASE_URLS:
@@ -71,7 +73,7 @@ def buscar_resultado(concurso: int | None) -> dict:
     raise RuntimeError(f"Não consegui consultar o resultado na Caixa. Detalhe: {last_error}")
 
 
-def extrair_dezenas_sorteadas(data: dict) -> list[int]:
+def extrair_dezenas_sorteadas(data: dict) -> List[int]:
     dezenas = (
         data.get("dezenasSorteadasOrdemSorteio")
         or data.get("listaDezenas")
@@ -114,12 +116,14 @@ def calcular_premio_por_acertos(data: dict, acertos: int) -> float:
     return 0.0
 
 
-def formatar_numeros(nums: list[int]) -> str:
+def formatar_numeros(nums: List[int]) -> str:
     return " ".join(f"{n:02d}" for n in nums)
 
 
+# --- UI ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.title("Conferidor de jogos Lotofácil)
+st.title("Lotofácil 2026")
+st.caption("Lucas - Henrique - Bruno - Sergio")
 
 use_ultimo = st.checkbox("Usar último concurso", value=True)
 
@@ -135,10 +139,13 @@ if st.button("Conferir", type="primary"):
     with st.spinner("Buscando dados do concurso na Caixa..."):
         try:
             concurso_num = None if use_ultimo else int(concurso)
+
             data = buscar_resultado(concurso_num)
             sorteadas = extrair_dezenas_sorteadas(data)
 
-            numero_concurso = data.get("numero") or data.get("numeroConcurso") or (concurso_num if concurso_num else "N/A")
+            numero_concurso = data.get("numero") or data.get("numeroConcurso") or (
+                concurso_num if concurso_num else "N/A"
+            )
             data_apuracao = data.get("dataApuracao") or data.get("data") or "N/A"
 
             st.subheader(f"Concurso {numero_concurso} — Data: {data_apuracao}")
@@ -156,7 +163,9 @@ if st.button("Conferir", type="primary"):
                 st.subheader(f"Jogo {idx}")
                 st.write(f"**Números do jogo:** {formatar_numeros(sorted(jogo))}")
                 st.write(f"**Acertos:** {qtd}")
-                st.write(f"**Dezenas acertadas:** {formatar_numeros(acertos_lista) if acertos_lista else '—'}")
+                st.write(
+                    f"**Dezenas acertadas:** {formatar_numeros(acertos_lista) if acertos_lista else '—'}"
+                )
 
                 faixa_txt = f"{qtd} acertos" if qtd >= 11 else "Não premiado"
                 st.write(f"**Faixa:** {faixa_txt}")
@@ -170,8 +179,4 @@ if st.button("Conferir", type="primary"):
             st.write(f"**Total ganho (somando os 4 jogos):** {formatar_moeda_br(total)}")
 
         except Exception as e:
-
             st.error(f"Erro: {e}")
-
-
-
