@@ -119,6 +119,7 @@ def formatar_numeros(nums: list[int]) -> str:
 
 
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
+st.title("Lotofácil 2026)
 st.title("Lucas - Henrique - Bruno - Sérgio")
 
 use_ultimo = st.checkbox("Usar último concurso", value=True)
@@ -172,3 +173,4 @@ if st.button("Conferir", type="primary"):
         except Exception as e:
 
             st.error(f"Erro: {e}")
+
