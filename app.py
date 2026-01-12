@@ -1,9 +1,10 @@
 import streamlit as st
 import requests
 from typing import List, Optional, Dict, Any
+from datetime import datetime, date
 
 
-# Jogos fixos da Lotofácil
+# --- Jogos ---
 GAMES: List[List[int]] = [
     [2, 3, 4, 6, 7, 8, 11, 12, 14, 16, 17, 18, 21, 22, 23],
     [1, 4, 5, 8, 9, 10, 12, 13, 15, 19, 20, 22, 23, 24, 25],
@@ -11,7 +12,6 @@ GAMES: List[List[int]] = [
     [2, 4, 5, 6, 7, 8, 10, 14, 16, 18, 19, 20, 21, 24, 25],
 ]
 
-# Jogos extras (ocasionais)
 EXTRA_GAMES: List[List[int]] = [
     [3, 4, 5, 8, 9, 10, 13, 14, 15, 18, 19, 20, 23, 24, 25],
     [3, 5, 6, 7, 10, 11, 12, 13, 16, 17, 18, 20, 21, 22, 23],
@@ -24,8 +24,9 @@ BASE_URLS: List[str] = [
 ]
 
 
+# --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
-    # Formata: R$ 1.234,56 (sem depender de locale do sistema)
+    # Formata: R$ 1.234,56 (sem depender do locale do sistema)
     valor_int = int(round(float(valor) * 100))
     reais = valor_int // 100
     centavos = valor_int % 100
@@ -54,8 +55,9 @@ def _is_json_response(resp: requests.Response) -> bool:
     return "json" in content_type
 
 
+@st.cache_data(ttl=3600)
 def buscar_resultado(concurso: Optional[int]) -> Dict[str, Any]:
-    last_error = None
+    last_error: Optional[Exception] = None
 
     for base in BASE_URLS:
         url = base if concurso is None else f"{base}/{concurso}"
@@ -68,7 +70,6 @@ def buscar_resultado(concurso: Optional[int]) -> Dict[str, Any]:
 
             data = r.json()
 
-            # Heurística simples: se tem alguma das chaves de dezenas, consideramos OK
             if any(k in data for k in ("dezenasSorteadasOrdemSorteio", "listaDezenas", "dezenasSorteadas")):
                 return data
 
@@ -127,6 +128,22 @@ def formatar_numeros(nums: List[int]) -> str:
     return " ".join(f"{n:02d}" for n in nums)
 
 
+def parse_data_concurso(data: Dict[str, Any]) -> date:
+    s = (data.get("dataApuracao") or data.get("data") or "").strip()
+    if not s:
+        raise RuntimeError("Não encontrei a data do concurso no retorno da Caixa.")
+
+    try:
+        return datetime.strptime(s, "%d/%m/%Y").date()
+    except ValueError:
+        pass
+
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).date()
+    except ValueError:
+        raise RuntimeError(f"Formato de data inesperado: {s}")
+
+
 def exibir_conferencia_de_jogos(
     titulo_bloco: str,
     jogos: List[List[int]],
@@ -160,12 +177,21 @@ def exibir_conferencia_de_jogos(
     return total_bloco
 
 
+def total_por_grupo(data: Dict[str, Any], sorteadas: List[int], jogos: List[List[int]]) -> float:
+    total = 0.0
+    sset = set(sorteadas)
+    for jogo in jogos:
+        acertos = len(set(jogo) & sset)
+        total += calcular_premio_por_acertos(data, acertos)
+    return total
+
+
 # --- UI ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
 st.title("Lotofácil 2026")
 st.caption("Lucas - Henrique - Bruno - Sergio")
 
-# Checkboxes lado a lado (como você sugeriu)
+# Checkboxes lado a lado (conferência normal)
 col1, col2 = st.columns(2)
 with col1:
     use_ultimo = st.checkbox("Usar último concurso", value=True)
@@ -195,7 +221,6 @@ if st.button("Conferir", type="primary"):
 
             total = 0.0
 
-            # Jogos fixos (sempre)
             total += exibir_conferencia_de_jogos(
                 titulo_bloco="Jogos Fixos",
                 jogos=GAMES,
@@ -204,7 +229,6 @@ if st.button("Conferir", type="primary"):
                 prefixo_nome="Jogo",
             )
 
-            # Jogos extras (só quando marcado)
             if usar_extras:
                 with st.expander("Jogos Extras", expanded=True):
                     total += exibir_conferencia_de_jogos(
@@ -221,3 +245,101 @@ if st.button("Conferir", type="primary"):
 
         except Exception as e:
             st.error(f"Erro: {e}")
+
+
+# --- Histórico com seleção de dias com Extras ---
+st.markdown("---")
+with st.expander("📅 Histórico", expanded=False):
+    c1, c2 = st.columns(2)
+    with c1:
+        dt_ini = st.date_input("Data inicial")
+    with c2:
+        dt_fim = st.date_input("Data final")
+
+    st.caption("Dica: primeiro pesquise o período. Depois selecione os dias em que vocês jogaram os **Jogos Extras**.")
+
+    if st.button("Pesquisar histórico"):
+        if dt_ini > dt_fim:
+            st.error("A **Data inicial** não pode ser maior que a **Data final**.")
+        else:
+            with st.spinner("Buscando histórico na Caixa..."):
+                try:
+                    data_ultimo = buscar_resultado(None)
+                    ultimo_num = int(data_ultimo.get("numero") or data_ultimo.get("numeroConcurso"))
+
+                    totais_fixos_por_dia: Dict[str, float] = {}
+                    totais_extras_por_dia: Dict[str, float] = {}
+
+                    limite_concursos = 700
+                    verificados = 0
+
+                    for num in range(ultimo_num, 0, -1):
+                        if verificados >= limite_concursos:
+                            st.warning(f"Limite de {limite_concursos} concursos atingido. Parando a busca.")
+                            break
+
+                        verificados += 1
+
+                        try:
+                            data = buscar_resultado(num)
+                            dt_concurso = parse_data_concurso(data)
+
+                            if dt_concurso < dt_ini:
+                                break
+
+                            if dt_ini <= dt_concurso <= dt_fim:
+                                sorteadas = extrair_dezenas_sorteadas(data)
+
+                                total_fixos = total_por_grupo(data, sorteadas, GAMES)
+                                total_extras = total_por_grupo(data, sorteadas, EXTRA_GAMES)
+
+                                chave = dt_concurso.strftime("%d/%m/%Y")
+                                totais_fixos_por_dia[chave] = totais_fixos_por_dia.get(chave, 0.0) + total_fixos
+                                totais_extras_por_dia[chave] = totais_extras_por_dia.get(chave, 0.0) + total_extras
+
+                        except Exception:
+                            continue
+
+                    dias_disponiveis = sorted(totais_fixos_por_dia.keys(), key=lambda x: datetime.strptime(x, "%d/%m/%Y"))
+
+                    st.session_state["hist_dias"] = dias_disponiveis
+                    st.session_state["hist_fixos"] = totais_fixos_por_dia
+                    st.session_state["hist_extras"] = totais_extras_por_dia
+
+                    # Default: nenhum dia com extras marcado
+                    st.session_state["hist_dias_extras_selecionados"] = []
+
+                except Exception as e:
+                    st.error(f"Erro ao pesquisar histórico: {e}")
+
+    # Se já pesquisou, mostra a seleção de dias com extras e o resultado
+    if "hist_dias" in st.session_state and st.session_state.get("hist_dias"):
+        dias = st.session_state["hist_dias"]
+        fixos = st.session_state["hist_fixos"]
+        extras = st.session_state["hist_extras"]
+
+        st.markdown("---")
+        st.subheader("Selecionar dias com Jogos Extras")
+
+        selecionados = st.multiselect(
+            "Marque os dias em que vocês fizeram os Jogos Extras:",
+            options=dias,
+            default=st.session_state.get("hist_dias_extras_selecionados", []),
+        )
+
+        if st.button("Aplicar seleção de extras"):
+            st.session_state["hist_dias_extras_selecionados"] = selecionados
+
+        dias_extras_set = set(st.session_state.get("hist_dias_extras_selecionados", []))
+
+        st.markdown("---")
+        st.subheader("Resultado no período")
+
+        total_periodo = 0.0
+        for dia in dias:
+            total_dia = fixos.get(dia, 0.0) + (extras.get(dia, 0.0) if dia in dias_extras_set else 0.0)
+            total_periodo += total_dia
+            st.write(f"{dia} — {formatar_moeda_br(total_dia)}")
+
+        st.subheader("Total no período")
+        st.write(f"**{formatar_moeda_br(total_periodo)}**")
