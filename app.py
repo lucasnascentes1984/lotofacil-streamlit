@@ -256,7 +256,7 @@ with st.expander("📅 Histórico", expanded=False):
     with c2:
         dt_fim = st.date_input("Data final")
 
-    st.caption("Dica: primeiro pesquise o período. Depois selecione os dias em que vocês jogaram os **Jogos Extras**.")
+    st.caption("Primeiro pesquise o período. Depois selecione os dias dos **Jogos Extras**.")
 
     if st.button("Pesquisar histórico"):
         if dt_ini > dt_fim:
@@ -322,7 +322,7 @@ with st.expander("📅 Histórico", expanded=False):
         st.subheader("Selecionar dias com Jogos Extras")
 
         selecionados = st.multiselect(
-            "Marque os dias em que vocês fizeram os Jogos Extras:",
+            "Marque os dias dos Jogos Extras:",
             options=dias,
             default=st.session_state.get("hist_dias_extras_selecionados", []),
         )
@@ -343,3 +343,4 @@ with st.expander("📅 Histórico", expanded=False):
 
         st.subheader("Total no período")
         st.write(f"**{formatar_moeda_br(total_periodo)}**")
+
