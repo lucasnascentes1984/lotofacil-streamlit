@@ -26,7 +26,6 @@ BASE_URLS: List[str] = [
 
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
-    # Formata: R$ 1.234,56 (sem depender do locale do sistema)
     valor_int = int(round(float(valor) * 100))
     reais = valor_int // 100
     centavos = valor_int % 100
@@ -106,7 +105,6 @@ def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
 
 
 def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
-    # faixa: 1=15, 2=14, 3=13, 4=12, 5=11  => faixa = 16 - acertos
     if acertos < 11 or acertos > 15:
         return 0.0
 
@@ -258,7 +256,26 @@ with st.expander("📅 Histórico", expanded=False):
 
     st.caption("Primeiro pesquise o período. Depois selecione os dias dos **Jogos Extras**.")
 
-    if st.button("Pesquisar histórico"):
+    top_actions = st.columns(2)
+    with top_actions[0]:
+        pesquisar = st.button("Pesquisar histórico")
+    with top_actions[1]:
+        limpar_hist = st.button("Limpar resultados do histórico")
+
+    if limpar_hist:
+        for k in [
+            "hist_dias",
+            "hist_fixos",
+            "hist_extras",
+            "hist_dias_extras_selecionados",
+            "hist_extras_multiselect",
+            "hist_action",
+        ]:
+            if k in st.session_state:
+                del st.session_state[k]
+        st.rerun()
+
+    if pesquisar:
         if dt_ini > dt_fim:
             st.error("A **Data inicial** não pode ser maior que a **Data final**.")
         else:
@@ -300,35 +317,70 @@ with st.expander("📅 Histórico", expanded=False):
                         except Exception:
                             continue
 
-                    dias_disponiveis = sorted(totais_fixos_por_dia.keys(), key=lambda x: datetime.strptime(x, "%d/%m/%Y"))
+                    dias_disponiveis = sorted(
+                        totais_fixos_por_dia.keys(),
+                        key=lambda x: datetime.strptime(x, "%d/%m/%Y")
+                    )
 
                     st.session_state["hist_dias"] = dias_disponiveis
                     st.session_state["hist_fixos"] = totais_fixos_por_dia
                     st.session_state["hist_extras"] = totais_extras_por_dia
 
-                    # Default: nenhum dia com extras marcado
+                    # seleção aplicada (vale para o total)
                     st.session_state["hist_dias_extras_selecionados"] = []
+
+                    # valor do widget multiselect (precisa existir antes do widget)
+                    st.session_state["hist_extras_multiselect"] = []
+
+                    st.session_state["hist_action"] = None
+
+                    st.rerun()
 
                 except Exception as e:
                     st.error(f"Erro ao pesquisar histórico: {e}")
 
     # Se já pesquisou, mostra a seleção de dias com extras e o resultado
-    if "hist_dias" in st.session_state and st.session_state.get("hist_dias"):
+    if st.session_state.get("hist_dias"):
         dias = st.session_state["hist_dias"]
         fixos = st.session_state["hist_fixos"]
         extras = st.session_state["hist_extras"]
 
+        # Aplicar ações ANTES de instanciar o multiselect
+        action = st.session_state.get("hist_action")
+        if action == "select_all":
+            st.session_state["hist_extras_multiselect"] = list(dias)
+            st.session_state["hist_dias_extras_selecionados"] = list(dias)
+            st.session_state["hist_action"] = None
+        elif action == "clear":
+            st.session_state["hist_extras_multiselect"] = []
+            st.session_state["hist_dias_extras_selecionados"] = []
+            st.session_state["hist_action"] = None
+
         st.markdown("---")
         st.subheader("Selecionar dias com Jogos Extras")
 
+        sel_actions = st.columns(3)
+        with sel_actions[0]:
+            if st.button("Marcar todos"):
+                st.session_state["hist_action"] = "select_all"
+                st.rerun()
+        with sel_actions[1]:
+            if st.button("Limpar seleção"):
+                st.session_state["hist_action"] = "clear"
+                st.rerun()
+        with sel_actions[2]:
+            aplicar = st.button("Aplicar seleção de extras")
+
+        # Widget (não mexer no st.session_state dessa key depois disso, na mesma execução)
         selecionados = st.multiselect(
             "Marque os dias dos Jogos Extras:",
             options=dias,
-            default=st.session_state.get("hist_dias_extras_selecionados", []),
+            key="hist_extras_multiselect",
         )
 
-        if st.button("Aplicar seleção de extras"):
-            st.session_state["hist_dias_extras_selecionados"] = selecionados
+        if aplicar:
+            st.session_state["hist_dias_extras_selecionados"] = list(selecionados)
+            st.rerun()
 
         dias_extras_set = set(st.session_state.get("hist_dias_extras_selecionados", []))
 
@@ -343,4 +395,3 @@ with st.expander("📅 Histórico", expanded=False):
 
         st.subheader("Total no período")
         st.write(f"**{formatar_moeda_br(total_periodo)}**")
-
