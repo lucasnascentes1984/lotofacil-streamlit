@@ -1,8 +1,9 @@
 import streamlit as st
 import requests
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date
 
+st.write("VERSAO-TESTE-2026-01-14-001")
 
 # --- Jogos ---
 GAMES: List[List[int]] = [
@@ -22,6 +23,142 @@ BASE_URLS: List[str] = [
     "https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil",
     "https://www.caixa.gov.br/loterias/_cache/webapi/lotofacil",
 ]
+
+
+# --- Visual (CSS) ---
+def aplicar_tema_visual():
+    st.markdown(
+        """
+        <style>
+          :root{
+            --max: 980px;
+            --space-1: 8px;
+            --space-2: 12px;
+            --space-3: 16px;
+            --space-4: 20px;
+            --space-5: 24px;
+            --radius-1: 12px;
+            --radius-2: 16px;
+            --blue: #1F5AFF;
+            --blue-border: rgba(31,90,255,0.16);
+            --muted: rgba(15,23,42,0.70);
+            --card-bg: rgba(2, 6, 23, 0.02);
+          }
+
+          .block-container{
+            padding-top: 1.1rem;
+            padding-bottom: 2rem;
+            max-width: var(--max);
+          }
+
+          /* HEADER - id fixo */
+          #lf-header{
+            position: relative;
+            overflow: hidden;
+            padding: var(--space-4) var(--space-4);
+            border-radius: var(--radius-2);
+            background: linear-gradient(135deg, rgba(31,90,255,0.14), rgba(31,90,255,0.03));
+            border: 1px solid var(--blue-border);
+            margin-bottom: var(--space-3);
+          }
+          #lf-header::before{
+            content:"";
+            position:absolute;
+            top:-85px;
+            right:-85px;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle at 35% 35%, rgba(31,90,255,0.34), rgba(31,90,255,0.00) 70%);
+            transform: rotate(12deg);
+          }
+          #lf-header .title{
+            font-size: 1.75rem;
+            font-weight: 850;
+            margin: 0;
+            letter-spacing: -0.6px;
+          }
+          #lf-header .subtitle{
+            margin: 6px 0 0 0;
+            font-size: 0.98rem;
+            color: rgba(31,90,255,0.95);
+            font-weight: 650;
+          }
+          #lf-header .caption{
+            margin-top: 6px;
+            color: rgba(15, 23, 42, 0.62);
+            font-size: 0.92rem;
+          }
+
+          /* Botões */
+          div.stButton > button{
+            border-radius: var(--radius-1);
+            padding: 0.55rem 1rem;
+            font-weight: 650;
+          }
+
+          /* Chips (dezenas) */
+          .chip-wrap{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px 0; }
+          .chip{
+            width:38px; height:38px;
+            border-radius:999px;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:750;
+            font-size:14px;
+            user-select:none;
+            border:1px solid rgba(31,90,255,0.20);
+            background: rgba(31,90,255,0.07);
+            color: var(--blue);
+          }
+          .chip--ok{
+            border:1px solid rgba(16,185,129,0.25);
+            background: rgba(16,185,129,0.10);
+            color:#059669;
+          }
+          .chip--muted{
+            border:1px solid rgba(148,163,184,0.35);
+            background: rgba(148,163,184,0.12);
+            color:#334155;
+          }
+
+          /* Métricas */
+          [data-testid="stMetric"]{
+            background: var(--card-bg);
+            padding: var(--space-3);
+            border-radius: var(--radius-1);
+          }
+          [data-testid="stMetricLabel"] p{ color: var(--muted); }
+
+          /* Texto pequeno */
+          .small-muted{
+            font-size: 0.90rem;
+            color: rgba(15, 23, 42, 0.75);
+            margin-top: 0.15rem;
+            margin-bottom: 0.35rem;
+            line-height: 1.2rem;
+            word-break: break-word;
+          }
+
+          /* Separadores mais suaves */
+          hr{ margin: 0.7rem 0; opacity: 0.55; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_chips(nums: List[int], variant: str = "default"):
+    cls = "chip"
+    if variant == "ok":
+        cls += " chip--ok"
+    elif variant == "muted":
+        cls += " chip--muted"
+
+    html = '<div class="chip-wrap">' + "".join(
+        f'<span class="{cls}">{n:02d}</span>' for n in nums
+    ) + "</div>"
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # --- Utilitários ---
@@ -122,10 +259,6 @@ def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
     return 0.0
 
 
-def formatar_numeros(nums: List[int]) -> str:
-    return " ".join(f"{n:02d}" for n in nums)
-
-
 def parse_data_concurso(data: Dict[str, Any]) -> date:
     s = (data.get("dataApuracao") or data.get("data") or "").strip()
     if not s:
@@ -150,27 +283,38 @@ def exibir_conferencia_de_jogos(
     prefixo_nome: str,
 ) -> float:
     total_bloco = 0.0
-    st.markdown("---")
     st.subheader(titulo_bloco)
 
+    sorteadas_set = set(sorteadas)
+
     for idx, jogo in enumerate(jogos, start=1):
-        acertos_lista = sorted(set(jogo) & set(sorteadas))
+        acertos_lista = sorted(set(jogo) & sorteadas_set)
         qtd = len(acertos_lista)
         premio = calcular_premio_por_acertos(data, qtd)
         total_bloco += premio
 
-        st.markdown("---")
-        st.subheader(f"{prefixo_nome} {idx}")
-        st.write(f"**Números do jogo:** {formatar_numeros(sorted(jogo))}")
-        st.write(f"**Acertos:** {qtd}")
-        st.write(f"**Dezenas acertadas:** {formatar_numeros(acertos_lista) if acertos_lista else '—'}")
+        with st.container(border=True):
+            st.markdown(f"### {prefixo_nome} {idx}")
 
-        faixa_txt = f"{qtd} acertos" if qtd >= 11 else "Não premiado"
-        st.write(f"**Faixa:** {faixa_txt}")
-        st.write(f"**Prêmio (conforme Caixa):** {formatar_moeda_br(premio)}")
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric("Acertos", f"{qtd}")
+            with c2:
+                st.metric("Faixa", f"{qtd} acertos" if qtd >= 11 else "Não premiado")
+            with c3:
+                st.metric("Prêmio", formatar_moeda_br(premio))
 
-        if qtd >= 11 and premio == 0.0:
-            st.warning("Não consegui ler o valor do prêmio dessa faixa no retorno da Caixa (veio 0).")
+            st.write("**Números do jogo:**")
+            render_chips(sorted(jogo), variant="muted")
+
+            st.write("**Dezenas acertadas:**")
+            if acertos_lista:
+                render_chips(acertos_lista, variant="ok")
+            else:
+                st.caption("—")
+
+            if qtd >= 11 and premio == 0.0:
+                st.warning("Não consegui ler o valor do prêmio dessa faixa no retorno da Caixa (veio 0).")
 
     return total_bloco
 
@@ -184,75 +328,143 @@ def total_por_grupo(data: Dict[str, Any], sorteadas: List[int], jogos: List[List
     return total
 
 
+def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int, int], int]:
+    if dt_ini > dt_fim:
+        raise RuntimeError("Data inicial maior que a data final.")
+
+    freq: Dict[int, int] = {i: 0 for i in range(1, 26)}
+    concursos_encontrados = 0
+
+    data_ultimo = buscar_resultado(None)
+    ultimo_num = int(data_ultimo.get("numero") or data_ultimo.get("numeroConcurso"))
+
+    limite_concursos = 900
+    verificados = 0
+
+    for num in range(ultimo_num, 0, -1):
+        if verificados >= limite_concursos:
+            break
+        verificados += 1
+
+        try:
+            data = buscar_resultado(num)
+            dt_concurso = parse_data_concurso(data)
+
+            if dt_concurso < dt_ini:
+                break
+
+            if dt_ini <= dt_concurso <= dt_fim:
+                dezenas = extrair_dezenas_sorteadas(data)
+                for d in dezenas:
+                    freq[d] += 1
+                concursos_encontrados += 1
+
+        except Exception:
+            continue
+
+    return freq, concursos_encontrados
+
+
+def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str) -> List[int]:
+    if qtd_dezenas not in (15, 16):
+        raise RuntimeError("Quantidade de dezenas inválida (use 15 ou 16).")
+
+    itens = list(freq.items())
+
+    if modo == "mais":
+        itens.sort(key=lambda x: (-x[1], x[0]))
+    elif modo == "menos":
+        itens.sort(key=lambda x: (x[1], x[0]))
+    else:
+        raise RuntimeError("Modo inválido (use 'mais' ou 'menos').")
+
+    jogo = [dez for dez, _cnt in itens[:qtd_dezenas]]
+    return sorted(jogo)
+
+
 # --- UI ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.title("Lotofácil 2026")
-st.caption("Lucas - Henrique - Bruno - Sergio")
+aplicar_tema_visual()
 
-# Checkboxes lado a lado (conferência normal)
-col1, col2 = st.columns(2)
-with col1:
-    use_ultimo = st.checkbox("Usar último concurso", value=True)
-with col2:
-    usar_extras = st.checkbox("Jogos Extras", value=False)
-
-concurso = st.number_input(
-    "Número do concurso",
-    min_value=1,
-    step=1,
-    disabled=use_ultimo,
-    help="Desmarque 'Usar último concurso' para digitar um concurso específico.",
+st.markdown(
+    """
+    <div id="lf-header">
+      <div class="title">Lotofácil 2026</div>
+      <div class="subtitle">Conferência, histórico e sugestões de jogos</div>
+      <div class="caption">Lucas - Henrique - Bruno - Sergio</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
-if st.button("Conferir", type="primary"):
-    with st.spinner("Buscando dados do concurso na Caixa..."):
-        try:
-            concurso_num = None if use_ultimo else int(concurso)
-            data = buscar_resultado(concurso_num)
-            sorteadas = extrair_dezenas_sorteadas(data)
+with st.container(border=True):
+    st.subheader("Conferência do concurso")
 
-            numero_concurso = data.get("numero") or data.get("numeroConcurso") or (concurso_num if concurso_num else "N/A")
-            data_apuracao = data.get("dataApuracao") or data.get("data") or "N/A"
+    col1, col2 = st.columns(2)
+    with col1:
+        use_ultimo = st.checkbox("Usar último concurso", value=True)
+    with col2:
+        usar_extras = st.checkbox("Jogos Extras", value=False)
 
-            st.subheader(f"Concurso {numero_concurso} — Data: {data_apuracao}")
-            st.write(f"**Dezenas sorteadas:** {formatar_numeros(sorteadas)}")
+    concurso = st.number_input(
+        "Número do concurso",
+        min_value=1,
+        step=1,
+        disabled=use_ultimo,
+        help="Desmarque 'Usar último concurso' para digitar um concurso específico.",
+    )
 
-            total = 0.0
+    if st.button("Conferir", type="primary"):
+        with st.spinner("Buscando dados do concurso na Caixa..."):
+            try:
+                concurso_num = None if use_ultimo else int(concurso)
+                data = buscar_resultado(concurso_num)
+                sorteadas = extrair_dezenas_sorteadas(data)
 
-            total += exibir_conferencia_de_jogos(
-                titulo_bloco="Jogos Fixos",
-                jogos=GAMES,
-                sorteadas=sorteadas,
-                data=data,
-                prefixo_nome="Jogo",
-            )
+                numero_concurso = data.get("numero") or data.get("numeroConcurso") or (
+                    concurso_num if concurso_num else "N/A"
+                )
+                data_apuracao = data.get("dataApuracao") or data.get("data") or "N/A"
 
-            if usar_extras:
-                with st.expander("Jogos Extras", expanded=True):
-                    total += exibir_conferencia_de_jogos(
-                        titulo_bloco="Conferência dos Jogos Extras",
-                        jogos=EXTRA_GAMES,
-                        sorteadas=sorteadas,
-                        data=data,
-                        prefixo_nome="Jogo Extra",
-                    )
+                with st.container(border=True):
+                    st.subheader(f"Concurso {numero_concurso}")
+                    st.caption(f"Data: {data_apuracao}")
+                    st.write("**Dezenas sorteadas:**")
+                    render_chips(sorteadas, variant="default")
 
-            st.markdown("---")
-            st.subheader("Total")
-            st.write(f"**Total ganho (somando os jogos selecionados):** {formatar_moeda_br(total)}")
+                total = 0.0
+                total += exibir_conferencia_de_jogos(
+                    titulo_bloco="Jogos Fixos",
+                    jogos=GAMES,
+                    sorteadas=sorteadas,
+                    data=data,
+                    prefixo_nome="Jogo",
+                )
 
-        except Exception as e:
-            st.error(f"Erro: {e}")
+                if usar_extras:
+                    with st.expander("Jogos Extras", expanded=True):
+                        total += exibir_conferencia_de_jogos(
+                            titulo_bloco="Conferência dos Jogos Extras",
+                            jogos=EXTRA_GAMES,
+                            sorteadas=sorteadas,
+                            data=data,
+                            prefixo_nome="Jogo Extra",
+                        )
+
+                with st.container(border=True):
+                    st.subheader("Total")
+                    st.metric("Total ganho (somando os jogos selecionados)", formatar_moeda_br(total))
+
+            except Exception as e:
+                st.error(f"Erro: {e}")
 
 
-# --- Histórico com seleção de dias com Extras ---
-st.markdown("---")
 with st.expander("📅 Histórico", expanded=False):
     c1, c2 = st.columns(2)
     with c1:
-        dt_ini = st.date_input("Data inicial")
+        dt_ini = st.date_input("Data inicial", key="hist_ini")
     with c2:
-        dt_fim = st.date_input("Data final")
+        dt_fim = st.date_input("Data final", key="hist_fim")
 
     st.caption("Primeiro pesquise o período. Depois selecione os dias dos **Jogos Extras**.")
 
@@ -319,19 +531,15 @@ with st.expander("📅 Histórico", expanded=False):
 
                     dias_disponiveis = sorted(
                         totais_fixos_por_dia.keys(),
-                        key=lambda x: datetime.strptime(x, "%d/%m/%Y")
+                        key=lambda x: datetime.strptime(x, "%d/%m/%Y"),
                     )
 
                     st.session_state["hist_dias"] = dias_disponiveis
                     st.session_state["hist_fixos"] = totais_fixos_por_dia
                     st.session_state["hist_extras"] = totais_extras_por_dia
 
-                    # seleção aplicada (vale para o total)
                     st.session_state["hist_dias_extras_selecionados"] = []
-
-                    # valor do widget multiselect (precisa existir antes do widget)
                     st.session_state["hist_extras_multiselect"] = []
-
                     st.session_state["hist_action"] = None
 
                     st.rerun()
@@ -339,13 +547,11 @@ with st.expander("📅 Histórico", expanded=False):
                 except Exception as e:
                     st.error(f"Erro ao pesquisar histórico: {e}")
 
-    # Se já pesquisou, mostra a seleção de dias com extras e o resultado
     if st.session_state.get("hist_dias"):
         dias = st.session_state["hist_dias"]
         fixos = st.session_state["hist_fixos"]
         extras = st.session_state["hist_extras"]
 
-        # Aplicar ações ANTES de instanciar o multiselect
         action = st.session_state.get("hist_action")
         if action == "select_all":
             st.session_state["hist_extras_multiselect"] = list(dias)
@@ -356,7 +562,6 @@ with st.expander("📅 Histórico", expanded=False):
             st.session_state["hist_dias_extras_selecionados"] = []
             st.session_state["hist_action"] = None
 
-        st.markdown("---")
         st.subheader("Selecionar dias com Jogos Extras")
 
         sel_actions = st.columns(3)
@@ -371,7 +576,6 @@ with st.expander("📅 Histórico", expanded=False):
         with sel_actions[2]:
             aplicar = st.button("Aplicar seleção de extras")
 
-        # Widget (não mexer no st.session_state dessa key depois disso, na mesma execução)
         selecionados = st.multiselect(
             "Marque os dias dos Jogos Extras:",
             options=dias,
@@ -384,14 +588,92 @@ with st.expander("📅 Histórico", expanded=False):
 
         dias_extras_set = set(st.session_state.get("hist_dias_extras_selecionados", []))
 
-        st.markdown("---")
         st.subheader("Resultado no período")
 
         total_periodo = 0.0
-        for dia in dias:
-            total_dia = fixos.get(dia, 0.0) + (extras.get(dia, 0.0) if dia in dias_extras_set else 0.0)
+
+        # Mostra em “linhas” com 2 cards por linha (mais compacto)
+        cols_per_row = 2
+        cols = st.columns(cols_per_row)
+
+        for i, dia in enumerate(dias):
+            total_fixos = fixos.get(dia, 0.0)
+            total_extras = extras.get(dia, 0.0) if dia in dias_extras_set else 0.0
+            total_dia = total_fixos + total_extras
             total_periodo += total_dia
-            st.write(f"{dia} — {formatar_moeda_br(total_dia)}")
+
+            col = cols[i % cols_per_row]
+            with col:
+                with st.container(border=True):
+                    # Linha principal (data + total)
+                    left, right = st.columns([1.2, 1])
+                    with left:
+                        st.markdown(f"### {dia}")
+                        st.caption("Extras: ✅" if dia in dias_extras_set else "Extras: —")
+                    with right:
+                        st.metric("Total do dia", formatar_moeda_br(total_dia))
+
+                    # Linha secundária (detalhe, menor)
+                    det1, det2 = st.columns(2)
+                    with det1:
+                        st.caption(f"Fixos: {formatar_moeda_br(total_fixos)}")
+                    with det2:
+                        st.caption(f"Extras: {formatar_moeda_br(total_extras)}")
+
+            # Quando fecha a linha (a cada 2), cria nova linha de colunas
+            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):
+                cols = st.columns(cols_per_row)
 
         st.subheader("Total no período")
-        st.write(f"**{formatar_moeda_br(total_periodo)}**")
+        st.metric("Total", formatar_moeda_br(total_periodo))
+
+
+with st.expander("📊 Sugestão de jogos", expanded=False):
+    a1, a2 = st.columns(2)
+    with a1:
+        analise_ini = st.date_input("Data inicial", key="analise_ini")
+    with a2:
+        analise_fim = st.date_input("Data final", key="analise_fim")
+
+    qtd_dezenas = st.radio("Quantidade de dezenas", options=[15, 16], horizontal=True)
+
+    if st.button("Gerar jogos sugeridos"):
+        if analise_ini > analise_fim:
+            st.error("A **Data inicial** não pode ser maior que a **Data final**.")
+        else:
+            with st.spinner("Lendo concursos do período e calculando frequências..."):
+                try:
+                    freq, concursos_encontrados = calcular_frequencia_no_periodo(analise_ini, analise_fim)
+
+                    if concursos_encontrados == 0:
+                        st.warning("Não encontrei concursos dentro do período selecionado.")
+                    else:
+                        with st.container(border=True):
+                            st.subheader("Resumo da análise")
+                            periodo_txt = f"{analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}"
+                            st.markdown(
+                                f'<div class="small-muted"><b>Período:</b> {periodo_txt}</div>',
+                                unsafe_allow_html=True,
+                            )
+
+                            c1, c2 = st.columns(2)
+                            with c1:
+                                st.metric("Quantidade de Concursos", f"{concursos_encontrados}")
+                            with c2:
+                                st.metric("Jogos", f"{qtd_dezenas} dezenas")
+
+                        jogo_mais = montar_jogo_por_frequencia(freq, qtd_dezenas=qtd_dezenas, modo="mais")
+                        jogo_menos = montar_jogo_por_frequencia(freq, qtd_dezenas=qtd_dezenas, modo="menos")
+
+                        c_left, c_right = st.columns(2)
+                        with c_left:
+                            with st.container(border=True):
+                                st.subheader("Mais sorteados")
+                                render_chips(jogo_mais, variant="default")
+                        with c_right:
+                            with st.container(border=True):
+                                st.subheader("Menos sorteados")
+                                render_chips(jogo_menos, variant="muted")
+
+                except Exception as e:
+                    st.error(f"Erro na análise: {e}")
