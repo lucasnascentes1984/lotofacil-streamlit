@@ -165,6 +165,15 @@ def render_chips(nums: List[int], variant: str = "default"):
     st.markdown(html, unsafe_allow_html=True)
 
 
+def render_chips_com_acertos(nums: List[int], acertos_set: set):
+    html_parts = ['<div class="chip-wrap">']
+    for n in nums:
+        cls = "chip chip--ok" if n in acertos_set else "chip chip--muted"
+        html_parts.append(f'<span class="{cls}">{n:02d}</span>')
+    html_parts.append("</div>")
+    st.markdown("".join(html_parts), unsafe_allow_html=True)
+
+
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
     cent = int(round(float(valor) * 100))
@@ -296,8 +305,8 @@ def exibir_conferencia_de_jogos(
     sorteadas_set = set(sorteadas)
 
     for idx, jogo in enumerate(jogos, start=1):
-        acertos_lista = sorted(set(jogo) & sorteadas_set)
-        qtd = len(acertos_lista)
+        acertos_set = set(jogo) & sorteadas_set
+        qtd = len(acertos_set)
         premio = calcular_premio_por_acertos(data, qtd)
         total_bloco += premio
 
@@ -313,13 +322,7 @@ def exibir_conferencia_de_jogos(
                 st.metric("Prêmio", formatar_moeda_br(premio))
 
             st.write("**Números do jogo:**")
-            render_chips(sorted(jogo), variant="muted")
-
-            st.write("**Dezenas acertadas:**")
-            if acertos_lista:
-                render_chips(acertos_lista, variant="ok")
-            else:
-                st.caption("—")
+            render_chips_com_acertos(sorted(jogo), acertos_set)
 
             if qtd >= 11 and premio == 0.0:
                 st.warning("Não consegui ler o valor do prêmio dessa faixa no retorno da Caixa (veio 0).")
@@ -545,7 +548,6 @@ with st.expander("📅 Histórico", expanded=False):
                     st.session_state["hist_fixos"] = totais_fixos_por_dia
                     st.session_state["hist_extras"] = totais_extras_por_dia
 
-                    # Seleção padrão: vazio
                     st.session_state["hist_extras_multiselect"] = []
                     st.session_state["hist_action"] = None
 
@@ -581,7 +583,6 @@ with st.expander("📅 Histórico", expanded=False):
                 st.session_state["hist_action"] = "clear"
                 st.rerun()
 
-        # ✅ Agora a seleção do multiselect é a fonte da verdade (sem botão "Aplicar")
         selecionados = st.multiselect(
             "Marque os dias dos Jogos Extras:",
             options=dias,
