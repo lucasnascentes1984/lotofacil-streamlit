@@ -24,6 +24,10 @@ BASE_URLS: List[str] = [
     "https://www.caixa.gov.br/loterias/_cache/webapi/lotofacil",
 ]
 
+# Custo dos extras (3 jogos x R$ 3,50)
+VALOR_JOGO_EXTRA = 3.50
+QTD_JOGOS_EXTRAS_DIA = 3
+
 
 # --- Visual (CSS) ---
 def aplicar_tema_visual():
@@ -163,11 +167,15 @@ def render_chips(nums: List[int], variant: str = "default"):
 
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
-    valor_int = int(round(float(valor) * 100))
-    reais = valor_int // 100
-    centavos = valor_int % 100
+    cent = int(round(float(valor) * 100))
+    sinal = "-" if cent < 0 else ""
+    cent_abs = abs(cent)
+
+    reais = cent_abs // 100
+    centavos = cent_abs % 100
+
     reais_str = f"{reais:,}".replace(",", ".")
-    return f"R$ {reais_str},{centavos:02d}"
+    return f"{sinal}R$ {reais_str},{centavos:02d}"
 
 
 def _to_float_brasil(valor: Any) -> float:
@@ -592,40 +600,42 @@ with st.expander("📅 Histórico", expanded=False):
 
         total_periodo = 0.0
 
-        # Mostra em “linhas” com 2 cards por linha (mais compacto)
         cols_per_row = 2
         cols = st.columns(cols_per_row)
 
         for i, dia in enumerate(dias):
             total_fixos = fixos.get(dia, 0.0)
             total_extras = extras.get(dia, 0.0) if dia in dias_extras_set else 0.0
-            total_dia = total_fixos + total_extras
-            total_periodo += total_dia
+
+            custo_extras = (VALOR_JOGO_EXTRA * QTD_JOGOS_EXTRAS_DIA) if dia in dias_extras_set else 0.0
+
+            total_dia_bruto = total_fixos + total_extras
+            total_dia_liquido = total_dia_bruto - custo_extras
+            total_periodo += total_dia_liquido
 
             col = cols[i % cols_per_row]
             with col:
                 with st.container(border=True):
-                    # Linha principal (data + total)
                     left, right = st.columns([1.2, 1])
                     with left:
                         st.markdown(f"### {dia}")
                         st.caption("Extras: ✅" if dia in dias_extras_set else "Extras: —")
                     with right:
-                        st.metric("Total do dia", formatar_moeda_br(total_dia))
+                        st.metric("Total do dia (líquido)", formatar_moeda_br(total_dia_liquido))
 
-                    # Linha secundária (detalhe, menor)
                     det1, det2 = st.columns(2)
                     with det1:
                         st.caption(f"Fixos: {formatar_moeda_br(total_fixos)}")
+                        st.caption(f"Custo extras: {formatar_moeda_br(custo_extras)}")
                     with det2:
-                        st.caption(f"Extras: {formatar_moeda_br(total_extras)}")
+                        st.caption(f"Extras (prêmios): {formatar_moeda_br(total_extras)}")
+                        st.caption(f"Bruto: {formatar_moeda_br(total_dia_bruto)}")
 
-            # Quando fecha a linha (a cada 2), cria nova linha de colunas
             if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):
                 cols = st.columns(cols_per_row)
 
         st.subheader("Total no período")
-        st.metric("Total", formatar_moeda_br(total_periodo))
+        st.metric("Total (líquido)", formatar_moeda_br(total_periodo))
 
 
 with st.expander("📊 Sugestão de jogos", expanded=False):
