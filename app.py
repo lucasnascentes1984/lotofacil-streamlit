@@ -38,7 +38,6 @@ def aplicar_tema_visual(modo: str):
       - "Escuro": força paleta escura via CSS
     """
 
-    # Base (claro) - seu padrão
     light_vars = """
       :root{
         --max: 980px;
@@ -57,6 +56,7 @@ def aplicar_tema_visual(modo: str):
         --muted: rgba(15,23,42,0.70);
 
         --card-bg: rgba(2, 6, 23, 0.02);
+
         --chip-bg: rgba(31,90,255,0.07);
         --chip-border: rgba(31,90,255,0.20);
 
@@ -75,7 +75,6 @@ def aplicar_tema_visual(modo: str):
       }
     """
 
-    # Escuro (forçado) - foco em contraste e legibilidade
     dark_vars = """
       :root{
         --max: 980px;
@@ -91,29 +90,28 @@ def aplicar_tema_visual(modo: str):
         --blue-border: rgba(122,162,255,0.22);
 
         --text: rgba(241,245,249,0.94);
-        --muted: rgba(226,232,240,0.70);
+        --muted: rgba(226,232,240,0.72);
 
-        --card-bg: rgba(255,255,255,0.04);
+        --card-bg: rgba(255,255,255,0.05);
+
         --chip-bg: rgba(122,162,255,0.12);
-        --chip-border: rgba(122,162,255,0.28);
+        --chip-border: rgba(122,162,255,0.30);
 
         --chip-muted-bg: rgba(148,163,184,0.10);
-        --chip-muted-border: rgba(148,163,184,0.25);
+        --chip-muted-border: rgba(148,163,184,0.26);
         --chip-muted-text: rgba(241,245,249,0.86);
 
         --chip-ok-bg: rgba(16,185,129,0.18);
-        --chip-ok-border: rgba(16,185,129,0.35);
-        --chip-ok-text: rgba(167,243,208,0.95);
+        --chip-ok-border: rgba(16,185,129,0.36);
+        --chip-ok-text: rgba(167,243,208,0.96);
 
         --header-grad-a: rgba(122,162,255,0.18);
         --header-grad-b: rgba(122,162,255,0.04);
         --header-splash: rgba(122,162,255,0.40);
-        --header-caption: rgba(226,232,240,0.75);
+        --header-caption: rgba(226,232,240,0.76);
       }
     """
 
-    # Automático: a gente não força fundo/texto global, só melhora componentes com vars "neutras".
-    # Para simplificar: Automático usa o light_vars (não força o body), e mantém mais compatível.
     if modo == "Escuro":
         vars_css = dark_vars
         force_page = """
@@ -147,7 +145,7 @@ def aplicar_tema_visual(modo: str):
 
           {force_page}
 
-          /* Ajuste geral de texto no app (ajuda no escuro) */
+          /* Texto */
           .stMarkdown, .stMarkdown p, .stMarkdown span, .stText, label, div, p {{
             color: var(--text);
           }}
@@ -155,7 +153,7 @@ def aplicar_tema_visual(modo: str):
             color: var(--muted) !important;
           }}
 
-          /* HEADER - id fixo */
+          /* HEADER */
           #lf-header{{
             position: relative;
             overflow: hidden;
@@ -201,7 +199,7 @@ def aplicar_tema_visual(modo: str):
             font-weight: 650;
           }}
 
-          /* Chips (dezenas) */
+          /* Chips */
           .chip-wrap{{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px 0; }}
           .chip{{
             width:38px; height:38px;
@@ -235,7 +233,6 @@ def aplicar_tema_visual(modo: str):
           }}
           [data-testid="stMetricLabel"] p{{ color: var(--muted) !important; }}
 
-          /* Texto pequeno */
           .small-muted{{
             font-size: 0.90rem;
             color: var(--muted);
@@ -245,7 +242,6 @@ def aplicar_tema_visual(modo: str):
             word-break: break-word;
           }}
 
-          /* Separadores */
           hr{{ margin: 0.7rem 0; opacity: 0.55; }}
         </style>
         """,
@@ -278,7 +274,7 @@ def render_chips_com_acertos(nums: List[int], acertos_set: set):
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
     cent = int(round(float(valor) * 100))
-    sinal = "-" if cent &lt; 0 else ""
+    sinal = "-" if cent < 0 else ""
     cent_abs = abs(cent)
 
     reais = cent_abs // 100
@@ -353,14 +349,14 @@ def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     if len(set(dezenas_int)) != 15:
         raise RuntimeError("As dezenas sorteadas não são únicas (duplicadas).")
 
-    if any(d &lt; 1 or d > 25 for d in dezenas_int):
+    if any(d < 1 or d > 25 for d in dezenas_int):
         raise RuntimeError("Há dezenas sorteadas fora do intervalo 1..25.")
 
     return sorted(dezenas_int)
 
 
 def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
-    if acertos &lt; 11 or acertos > 15:
+    if acertos < 11 or acertos > 15:
         return 0.0
 
     faixa_esperada = 16 - acertos
@@ -462,10 +458,10 @@ def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int
             data = buscar_resultado(num)
             dt_concurso = parse_data_concurso(data)
 
-            if dt_concurso &lt; dt_ini:
+            if dt_concurso < dt_ini:
                 break
 
-            if dt_ini &lt;= dt_concurso &lt;= dt_fim:
+            if dt_ini <= dt_concurso <= dt_fim:
                 dezenas = extrair_dezenas_sorteadas(data)
                 for d in dezenas:
                     freq[d] += 1
@@ -497,13 +493,12 @@ def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str
 # --- UI ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
 
-# Seletor de modo (antes de aplicar o CSS)
 with st.sidebar:
     modo_visual = st.selectbox(
         "Modo de visualização",
         options=["Automático", "Claro", "Escuro"],
         index=0,
-        help="Automático usa o tema do Streamlit. Claro/Escuro forçam um tema para melhorar a leitura.",
+        help="Automático respeita o tema do Streamlit. Claro/Escuro forçam um tema para melhorar a leitura.",
     )
 
 aplicar_tema_visual(modo_visual)
@@ -586,209 +581,3 @@ with st.expander("📅 Histórico", expanded=False):
     with c1:
         dt_ini = st.date_input("Data inicial", key="hist_ini")
     with c2:
-        dt_fim = st.date_input("Data final", key="hist_fim")
-
-    st.caption("Primeiro pesquise o período. Depois selecione os dias dos **Jogos Extras**.")
-
-    top_actions = st.columns(2)
-    with top_actions[0]:
-        pesquisar = st.button("Pesquisar histórico")
-    with top_actions[1]:
-        limpar_hist = st.button("Limpar resultados do histórico")
-
-    if limpar_hist:
-        for k in [
-            "hist_dias",
-            "hist_fixos",
-            "hist_extras",
-            "hist_extras_multiselect",
-            "hist_action",
-        ]:
-            if k in st.session_state:
-                del st.session_state[k]
-        st.rerun()
-
-    if pesquisar:
-        if dt_ini > dt_fim:
-            st.error("A **Data inicial** não pode ser maior que a **Data final**.")
-        else:
-            with st.spinner("Buscando histórico na Caixa..."):
-                try:
-                    data_ultimo = buscar_resultado(None)
-                    ultimo_num = int(data_ultimo.get("numero") or data_ultimo.get("numeroConcurso"))
-
-                    totais_fixos_por_dia: Dict[str, float] = {}
-                    totais_extras_por_dia: Dict[str, float] = {}
-
-                    limite_concursos = 700
-                    verificados = 0
-
-                    for num in range(ultimo_num, 0, -1):
-                        if verificados >= limite_concursos:
-                            st.warning(f"Limite de {limite_concursos} concursos atingido. Parando a busca.")
-                            break
-
-                        verificados += 1
-
-                        try:
-                            data = buscar_resultado(num)
-                            dt_concurso = parse_data_concurso(data)
-
-                            if dt_concurso &lt; dt_ini:
-                                break
-
-                            if dt_ini &lt;= dt_concurso &lt;= dt_fim:
-                                sorteadas = extrair_dezenas_sorteadas(data)
-
-                                total_fixos = total_por_grupo(data, sorteadas, GAMES)
-                                total_extras = total_por_grupo(data, sorteadas, EXTRA_GAMES)
-
-                                chave = dt_concurso.strftime("%d/%m/%Y")
-                                totais_fixos_por_dia[chave] = totais_fixos_por_dia.get(chave, 0.0) + total_fixos
-                                totais_extras_por_dia[chave] = totais_extras_por_dia.get(chave, 0.0) + total_extras
-
-                        except Exception:
-                            continue
-
-                    dias_disponiveis = sorted(
-                        totais_fixos_por_dia.keys(),
-                        key=lambda x: datetime.strptime(x, "%d/%m/%Y"),
-                    )
-
-                    st.session_state["hist_dias"] = dias_disponiveis
-                    st.session_state["hist_fixos"] = totais_fixos_por_dia
-                    st.session_state["hist_extras"] = totais_extras_por_dia
-
-                    st.session_state["hist_extras_multiselect"] = []
-                    st.session_state["hist_action"] = None
-
-                    st.rerun()
-
-                except Exception as e:
-                    st.error(f"Erro ao pesquisar histórico: {e}")
-
-    if st.session_state.get("hist_dias"):
-        dias = st.session_state["hist_dias"]
-        fixos = st.session_state["hist_fixos"]
-        extras = st.session_state["hist_extras"]
-
-        action = st.session_state.get("hist_action")
-        if action == "select_all":
-            st.session_state["hist_extras_multiselect"] = list(dias)
-            st.session_state["hist_action"] = None
-            st.rerun()
-        elif action == "clear":
-            st.session_state["hist_extras_multiselect"] = []
-            st.session_state["hist_action"] = None
-            st.rerun()
-
-        st.subheader("Selecionar dias com Jogos Extras")
-
-        sel_actions = st.columns(2)
-        with sel_actions[0]:
-            if st.button("Marcar todos"):
-                st.session_state["hist_action"] = "select_all"
-                st.rerun()
-        with sel_actions[1]:
-            if st.button("Limpar seleção"):
-                st.session_state["hist_action"] = "clear"
-                st.rerun()
-
-        selecionados = st.multiselect(
-            "Marque os dias dos Jogos Extras:",
-            options=dias,
-            key="hist_extras_multiselect",
-        )
-        dias_extras_set = set(selecionados)
-
-        st.subheader("Resultado no período")
-
-        total_periodo = 0.0
-
-        cols_per_row = 2
-        cols = st.columns(cols_per_row)
-
-        for i, dia in enumerate(dias):
-            total_fixos = fixos.get(dia, 0.0)
-            total_extras = extras.get(dia, 0.0) if dia in dias_extras_set else 0.0
-
-            custo_extras = (VALOR_JOGO_EXTRA * QTD_JOGOS_EXTRAS_DIA) if dia in dias_extras_set else 0.0
-
-            total_dia_bruto = total_fixos + total_extras
-            total_dia_liquido = total_dia_bruto - custo_extras
-            total_periodo += total_dia_liquido
-
-            col = cols[i % cols_per_row]
-            with col:
-                with st.container(border=True):
-                    left, right = st.columns([1.2, 1])
-                    with left:
-                        st.markdown(f"### {dia}")
-                        st.caption("Extras: ✅" if dia in dias_extras_set else "Extras: —")
-                    with right:
-                        st.metric("Total do dia (líquido)", formatar_moeda_br(total_dia_liquido))
-
-                    det1, det2 = st.columns(2)
-                    with det1:
-                        st.caption(f"Fixos: {formatar_moeda_br(total_fixos)}")
-                        st.caption(f"Custo extras: {formatar_moeda_br(custo_extras)}")
-                    with det2:
-                        st.caption(f"Extras (prêmios): {formatar_moeda_br(total_extras)}")
-                        st.caption(f"Bruto: {formatar_moeda_br(total_dia_bruto)}")
-
-            if (i + 1) % cols_per_row == 0 and (i + 1) &lt; len(dias):
-                cols = st.columns(cols_per_row)
-
-        st.subheader("Total no período")
-        st.metric("Total (líquido)", formatar_moeda_br(total_periodo))
-
-
-with st.expander("📊 Sugestão de jogos", expanded=False):
-    a1, a2 = st.columns(2)
-    with a1:
-        analise_ini = st.date_input("Data inicial", key="analise_ini")
-    with a2:
-        analise_fim = st.date_input("Data final", key="analise_fim")
-
-    qtd_dezenas = st.radio("Quantidade de dezenas", options=[15, 16], horizontal=True)
-
-    if st.button("Gerar jogos sugeridos"):
-        if analise_ini > analise_fim:
-            st.error("A **Data inicial** não pode ser maior que a **Data final**.")
-        else:
-            with st.spinner("Lendo concursos do período e calculando frequências..."):
-                try:
-                    freq, concursos_encontrados = calcular_frequencia_no_periodo(analise_ini, analise_fim)
-
-                    if concursos_encontrados == 0:
-                        st.warning("Não encontrei concursos dentro do período selecionado.")
-                    else:
-                        with st.container(border=True):
-                            st.subheader("Resumo da análise")
-                            periodo_txt = f"{analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}"
-                            st.markdown(
-                                f'<div class="small-muted"><b>Período:</b> {periodo_txt}</div>',
-                                unsafe_allow_html=True,
-                            )
-
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.metric("Quantidade de Concursos", f"{concursos_encontrados}")
-                            with c2:
-                                st.metric("Jogos", f"{qtd_dezenas} dezenas")
-
-                        jogo_mais = montar_jogo_por_frequencia(freq, qtd_dezenas=qtd_dezenas, modo="mais")
-                        jogo_menos = montar_jogo_por_frequencia(freq, qtd_dezenas=qtd_dezenas, modo="menos")
-
-                        c_left, c_right = st.columns(2)
-                        with c_left:
-                            with st.container(border=True):
-                                st.subheader("Mais sorteados")
-                                render_chips(jogo_mais, variant="default")
-                        with c_right:
-                            with st.container(border=True):
-                                st.subheader("Menos sorteados")
-                                render_chips(jogo_menos, variant="muted")
-
-                except Exception as e:
-                    st.error(f"Erro na análise: {e}")
