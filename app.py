@@ -30,79 +30,180 @@ QTD_JOGOS_EXTRAS_DIA = 3
 
 
 # --- Visual (CSS) ---
-def aplicar_tema_visual():
-    st.markdown(
-        """
-        <style>
-          :root{
-            --max: 980px;
-            --space-1: 8px;
-            --space-2: 12px;
-            --space-3: 16px;
-            --space-4: 20px;
-            --space-5: 24px;
-            --radius-1: 12px;
-            --radius-2: 16px;
-            --blue: #1F5AFF;
-            --blue-border: rgba(31,90,255,0.16);
-            --muted: rgba(15,23,42,0.70);
-            --card-bg: rgba(2, 6, 23, 0.02);
-          }
+def aplicar_tema_visual(modo: str):
+    """
+    modo:
+      - "Automático": respeita o tema do Streamlit (claro/escuro do usuário)
+      - "Claro": força paleta clara via CSS
+      - "Escuro": força paleta escura via CSS
+    """
 
-          .block-container{
+    # Base (claro) - seu padrão
+    light_vars = """
+      :root{
+        --max: 980px;
+        --space-1: 8px;
+        --space-2: 12px;
+        --space-3: 16px;
+        --space-4: 20px;
+        --space-5: 24px;
+        --radius-1: 12px;
+        --radius-2: 16px;
+
+        --blue: #1F5AFF;
+        --blue-border: rgba(31,90,255,0.16);
+
+        --text: rgba(15,23,42,0.92);
+        --muted: rgba(15,23,42,0.70);
+
+        --card-bg: rgba(2, 6, 23, 0.02);
+        --chip-bg: rgba(31,90,255,0.07);
+        --chip-border: rgba(31,90,255,0.20);
+
+        --chip-muted-bg: rgba(148,163,184,0.12);
+        --chip-muted-border: rgba(148,163,184,0.35);
+        --chip-muted-text: #334155;
+
+        --chip-ok-bg: rgba(16,185,129,0.10);
+        --chip-ok-border: rgba(16,185,129,0.25);
+        --chip-ok-text: #059669;
+
+        --header-grad-a: rgba(31,90,255,0.14);
+        --header-grad-b: rgba(31,90,255,0.03);
+        --header-splash: rgba(31,90,255,0.34);
+        --header-caption: rgba(15, 23, 42, 0.62);
+      }
+    """
+
+    # Escuro (forçado) - foco em contraste e legibilidade
+    dark_vars = """
+      :root{
+        --max: 980px;
+        --space-1: 8px;
+        --space-2: 12px;
+        --space-3: 16px;
+        --space-4: 20px;
+        --space-5: 24px;
+        --radius-1: 12px;
+        --radius-2: 16px;
+
+        --blue: #7AA2FF;
+        --blue-border: rgba(122,162,255,0.22);
+
+        --text: rgba(241,245,249,0.94);
+        --muted: rgba(226,232,240,0.70);
+
+        --card-bg: rgba(255,255,255,0.04);
+        --chip-bg: rgba(122,162,255,0.12);
+        --chip-border: rgba(122,162,255,0.28);
+
+        --chip-muted-bg: rgba(148,163,184,0.10);
+        --chip-muted-border: rgba(148,163,184,0.25);
+        --chip-muted-text: rgba(241,245,249,0.86);
+
+        --chip-ok-bg: rgba(16,185,129,0.18);
+        --chip-ok-border: rgba(16,185,129,0.35);
+        --chip-ok-text: rgba(167,243,208,0.95);
+
+        --header-grad-a: rgba(122,162,255,0.18);
+        --header-grad-b: rgba(122,162,255,0.04);
+        --header-splash: rgba(122,162,255,0.40);
+        --header-caption: rgba(226,232,240,0.75);
+      }
+    """
+
+    # Automático: a gente não força fundo/texto global, só melhora componentes com vars "neutras".
+    # Para simplificar: Automático usa o light_vars (não força o body), e mantém mais compatível.
+    if modo == "Escuro":
+        vars_css = dark_vars
+        force_page = """
+          body, .stApp{
+            background: #0b1220 !important;
+            color: var(--text) !important;
+          }
+        """
+    elif modo == "Claro":
+        vars_css = light_vars
+        force_page = """
+          body, .stApp{
+            background: #ffffff !important;
+            color: var(--text) !important;
+          }
+        """
+    else:  # Automático
+        vars_css = light_vars
+        force_page = ""  # não força o background, deixa o Streamlit decidir
+
+    st.markdown(
+        f"""
+        <style>
+          {vars_css}
+
+          .block-container{{
             padding-top: 1.1rem;
             padding-bottom: 2rem;
             max-width: var(--max);
-          }
+          }}
+
+          {force_page}
+
+          /* Ajuste geral de texto no app (ajuda no escuro) */
+          .stMarkdown, .stMarkdown p, .stMarkdown span, .stText, label, div, p {{
+            color: var(--text);
+          }}
+          .stCaption, .stCaption p {{
+            color: var(--muted) !important;
+          }}
 
           /* HEADER - id fixo */
-          #lf-header{
+          #lf-header{{
             position: relative;
             overflow: hidden;
             padding: var(--space-4) var(--space-4);
             border-radius: var(--radius-2);
-            background: linear-gradient(135deg, rgba(31,90,255,0.14), rgba(31,90,255,0.03));
+            background: linear-gradient(135deg, var(--header-grad-a), var(--header-grad-b));
             border: 1px solid var(--blue-border);
             margin-bottom: var(--space-3);
-          }
-          #lf-header::before{
+          }}
+          #lf-header::before{{
             content:"";
             position:absolute;
             top:-85px;
             right:-85px;
             width: 260px;
             height: 260px;
-            background: radial-gradient(circle at 35% 35%, rgba(31,90,255,0.34), rgba(31,90,255,0.00) 70%);
+            background: radial-gradient(circle at 35% 35%, var(--header-splash), rgba(0,0,0,0) 70%);
             transform: rotate(12deg);
-          }
-          #lf-header .title{
+          }}
+          #lf-header .title{{
             font-size: 1.75rem;
             font-weight: 850;
             margin: 0;
             letter-spacing: -0.6px;
-          }
-          #lf-header .subtitle{
+            color: var(--text);
+          }}
+          #lf-header .subtitle{{
             margin: 6px 0 0 0;
             font-size: 0.98rem;
-            color: rgba(31,90,255,0.95);
+            color: var(--blue);
             font-weight: 650;
-          }
-          #lf-header .caption{
+          }}
+          #lf-header .caption{{
             margin-top: 6px;
-            color: rgba(15, 23, 42, 0.62);
+            color: var(--header-caption);
             font-size: 0.92rem;
-          }
+          }}
 
           /* Botões */
-          div.stButton > button{
+          div.stButton > button{{
             border-radius: var(--radius-1);
             padding: 0.55rem 1rem;
             font-weight: 650;
-          }
+          }}
 
           /* Chips (dezenas) */
-          .chip-wrap{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px 0; }
-          .chip{
+          .chip-wrap{{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px 0; }}
+          .chip{{
             width:38px; height:38px;
             border-radius:999px;
             display:inline-flex;
@@ -111,41 +212,41 @@ def aplicar_tema_visual():
             font-weight:750;
             font-size:14px;
             user-select:none;
-            border:1px solid rgba(31,90,255,0.20);
-            background: rgba(31,90,255,0.07);
+            border:1px solid var(--chip-border);
+            background: var(--chip-bg);
             color: var(--blue);
-          }
-          .chip--ok{
-            border:1px solid rgba(16,185,129,0.25);
-            background: rgba(16,185,129,0.10);
-            color:#059669;
-          }
-          .chip--muted{
-            border:1px solid rgba(148,163,184,0.35);
-            background: rgba(148,163,184,0.12);
-            color:#334155;
-          }
+          }}
+          .chip--ok{{
+            border:1px solid var(--chip-ok-border);
+            background: var(--chip-ok-bg);
+            color: var(--chip-ok-text);
+          }}
+          .chip--muted{{
+            border:1px solid var(--chip-muted-border);
+            background: var(--chip-muted-bg);
+            color: var(--chip-muted-text);
+          }}
 
           /* Métricas */
-          [data-testid="stMetric"]{
+          [data-testid="stMetric"]{{
             background: var(--card-bg);
             padding: var(--space-3);
             border-radius: var(--radius-1);
-          }
-          [data-testid="stMetricLabel"] p{ color: var(--muted); }
+          }}
+          [data-testid="stMetricLabel"] p{{ color: var(--muted) !important; }}
 
           /* Texto pequeno */
-          .small-muted{
+          .small-muted{{
             font-size: 0.90rem;
-            color: rgba(15, 23, 42, 0.75);
+            color: var(--muted);
             margin-top: 0.15rem;
             margin-bottom: 0.35rem;
             line-height: 1.2rem;
             word-break: break-word;
-          }
+          }}
 
-          /* Separadores mais suaves */
-          hr{ margin: 0.7rem 0; opacity: 0.55; }
+          /* Separadores */
+          hr{{ margin: 0.7rem 0; opacity: 0.55; }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -177,7 +278,7 @@ def render_chips_com_acertos(nums: List[int], acertos_set: set):
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
     cent = int(round(float(valor) * 100))
-    sinal = "-" if cent < 0 else ""
+    sinal = "-" if cent &lt; 0 else ""
     cent_abs = abs(cent)
 
     reais = cent_abs // 100
@@ -252,14 +353,14 @@ def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     if len(set(dezenas_int)) != 15:
         raise RuntimeError("As dezenas sorteadas não são únicas (duplicadas).")
 
-    if any(d < 1 or d > 25 for d in dezenas_int):
+    if any(d &lt; 1 or d > 25 for d in dezenas_int):
         raise RuntimeError("Há dezenas sorteadas fora do intervalo 1..25.")
 
     return sorted(dezenas_int)
 
 
 def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
-    if acertos < 11 or acertos > 15:
+    if acertos &lt; 11 or acertos > 15:
         return 0.0
 
     faixa_esperada = 16 - acertos
@@ -361,10 +462,10 @@ def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int
             data = buscar_resultado(num)
             dt_concurso = parse_data_concurso(data)
 
-            if dt_concurso < dt_ini:
+            if dt_concurso &lt; dt_ini:
                 break
 
-            if dt_ini <= dt_concurso <= dt_fim:
+            if dt_ini &lt;= dt_concurso &lt;= dt_fim:
                 dezenas = extrair_dezenas_sorteadas(data)
                 for d in dezenas:
                     freq[d] += 1
@@ -395,7 +496,17 @@ def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str
 
 # --- UI ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-aplicar_tema_visual()
+
+# Seletor de modo (antes de aplicar o CSS)
+with st.sidebar:
+    modo_visual = st.selectbox(
+        "Modo de visualização",
+        options=["Automático", "Claro", "Escuro"],
+        index=0,
+        help="Automático usa o tema do Streamlit. Claro/Escuro forçam um tema para melhorar a leitura.",
+    )
+
+aplicar_tema_visual(modo_visual)
 
 st.markdown(
     """
@@ -523,10 +634,10 @@ with st.expander("📅 Histórico", expanded=False):
                             data = buscar_resultado(num)
                             dt_concurso = parse_data_concurso(data)
 
-                            if dt_concurso < dt_ini:
+                            if dt_concurso &lt; dt_ini:
                                 break
 
-                            if dt_ini <= dt_concurso <= dt_fim:
+                            if dt_ini &lt;= dt_concurso &lt;= dt_fim:
                                 sorteadas = extrair_dezenas_sorteadas(data)
 
                                 total_fixos = total_por_grupo(data, sorteadas, GAMES)
@@ -625,7 +736,7 @@ with st.expander("📅 Histórico", expanded=False):
                         st.caption(f"Extras (prêmios): {formatar_moeda_br(total_extras)}")
                         st.caption(f"Bruto: {formatar_moeda_br(total_dia_bruto)}")
 
-            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):
+            if (i + 1) % cols_per_row == 0 and (i + 1) &lt; len(dias):
                 cols = st.columns(cols_per_row)
 
         st.subheader("Total no período")
