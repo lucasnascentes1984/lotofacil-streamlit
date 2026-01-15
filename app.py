@@ -487,7 +487,6 @@ with st.expander("📅 Histórico", expanded=False):
             "hist_dias",
             "hist_fixos",
             "hist_extras",
-            "hist_dias_extras_selecionados",
             "hist_extras_multiselect",
             "hist_action",
         ]:
@@ -546,7 +545,7 @@ with st.expander("📅 Histórico", expanded=False):
                     st.session_state["hist_fixos"] = totais_fixos_por_dia
                     st.session_state["hist_extras"] = totais_extras_por_dia
 
-                    st.session_state["hist_dias_extras_selecionados"] = []
+                    # Seleção padrão: vazio
                     st.session_state["hist_extras_multiselect"] = []
                     st.session_state["hist_action"] = None
 
@@ -563,16 +562,16 @@ with st.expander("📅 Histórico", expanded=False):
         action = st.session_state.get("hist_action")
         if action == "select_all":
             st.session_state["hist_extras_multiselect"] = list(dias)
-            st.session_state["hist_dias_extras_selecionados"] = list(dias)
             st.session_state["hist_action"] = None
+            st.rerun()
         elif action == "clear":
             st.session_state["hist_extras_multiselect"] = []
-            st.session_state["hist_dias_extras_selecionados"] = []
             st.session_state["hist_action"] = None
+            st.rerun()
 
         st.subheader("Selecionar dias com Jogos Extras")
 
-        sel_actions = st.columns(3)
+        sel_actions = st.columns(2)
         with sel_actions[0]:
             if st.button("Marcar todos"):
                 st.session_state["hist_action"] = "select_all"
@@ -581,20 +580,14 @@ with st.expander("📅 Histórico", expanded=False):
             if st.button("Limpar seleção"):
                 st.session_state["hist_action"] = "clear"
                 st.rerun()
-        with sel_actions[2]:
-            aplicar = st.button("Aplicar seleção de extras")
 
+        # ✅ Agora a seleção do multiselect é a fonte da verdade (sem botão "Aplicar")
         selecionados = st.multiselect(
             "Marque os dias dos Jogos Extras:",
             options=dias,
             key="hist_extras_multiselect",
         )
-
-        if aplicar:
-            st.session_state["hist_dias_extras_selecionados"] = list(selecionados)
-            st.rerun()
-
-        dias_extras_set = set(st.session_state.get("hist_dias_extras_selecionados", []))
+        dias_extras_set = set(selecionados)
 
         st.subheader("Resultado no período")
 
