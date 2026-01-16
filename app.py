@@ -511,7 +511,7 @@ with st.container(border=True):
 
     col1, col2 = st.columns(2)
     with col1:
-        use_ultimo = st.checkbox("Usar último concurso", value=True)
+        use_ultimo = st.checkbox("Último concurso", value=True)
     with col2:
         usar_extras = st.checkbox("Jogos Extras", value=False)
 
@@ -781,3 +781,4 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
 
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
+
