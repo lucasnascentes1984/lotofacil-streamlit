@@ -38,7 +38,7 @@ def aplicar_tema_visual(modo: str):
       - "Escuro": força paleta escura via CSS
     """
 
-    # Paleta clara (padrão atual)
+    # Paleta clara (padrão)
     light_vars = """
       :root{
         --max: 980px;
@@ -76,7 +76,7 @@ def aplicar_tema_visual(modo: str):
       }
     """
 
-    # Paleta escura (contraste alto para leitura)
+    # Paleta escura (contraste alto)
     dark_vars = """
       :root{
         --max: 980px;
@@ -132,7 +132,7 @@ def aplicar_tema_visual(modo: str):
         """
     else:  # Automático
         vars_css = light_vars
-        force_page = ""  # não força o background, deixa o Streamlit decidir
+        force_page = ""  # não força o background
 
     st.markdown(
         f"""
