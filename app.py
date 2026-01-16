@@ -3,6 +3,7 @@ import requests
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date
 
+st.set_page_config(page_title="Lotofácil 2026", layout="centered")
 st.write("VERSAO-TESTE-2026-01-14-001")
 
 # --- Jogos ---
@@ -32,13 +33,9 @@ QTD_JOGOS_EXTRAS_DIA = 3
 # --- Visual (CSS) ---
 def aplicar_tema_visual(modo: str):
     """
-    modo:
-      - "Automático": respeita o tema do Streamlit (claro/escuro do usuário)
-      - "Claro": força paleta clara via CSS
-      - "Escuro": força paleta escura via CSS
+    modo: "Claro" ou "Escuro"
     """
 
-    # Paleta clara (padrão)
     light_vars = """
       :root{
         --max: 980px;
@@ -76,7 +73,6 @@ def aplicar_tema_visual(modo: str):
       }
     """
 
-    # Paleta escura (contraste alto)
     dark_vars = """
       :root{
         --max: 980px;
@@ -122,7 +118,7 @@ def aplicar_tema_visual(modo: str):
             color: var(--text) !important;
           }
         """
-    elif modo == "Claro":
+    else:  # "Claro"
         vars_css = light_vars
         force_page = """
           body, .stApp{
@@ -130,9 +126,6 @@ def aplicar_tema_visual(modo: str):
             color: var(--text) !important;
           }
         """
-    else:  # Automático
-        vars_css = light_vars
-        force_page = ""  # não força o background
 
     st.markdown(
         f"""
@@ -147,7 +140,7 @@ def aplicar_tema_visual(modo: str):
 
           {force_page}
 
-          /* Texto (ajuda no escuro) */
+          /* Texto */
           .stMarkdown, .stMarkdown p, .stMarkdown span, .stText, label, div, p {{
             color: var(--text);
           }}
@@ -492,19 +485,15 @@ def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str
     return sorted(jogo)
 
 
-# --- UI ---
-st.set_page_config(page_title="Lotofácil 2026", layout="centered")
+# --- Toggle no topo: Claro ↔ Escuro ---
+top_left, top_right = st.columns([3, 1])
+with top_right:
+    modo_escuro = st.toggle("Escuro", value=False, help="Desligado = Claro | Ligado = Escuro")
 
-with st.sidebar:
-    modo_visual = st.selectbox(
-        "Modo de visualização",
-        options=["Automático", "Claro", "Escuro"],
-        index=0,
-        help="Automático respeita o tema do Streamlit. Claro/Escuro forçam um tema para melhorar a leitura.",
-    )
-
+modo_visual = "Escuro" if modo_escuro else "Claro"
 aplicar_tema_visual(modo_visual)
 
+# --- Header ---
 st.markdown(
     """
     <div id="lf-header">
@@ -516,6 +505,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# --- Conferência ---
 with st.container(border=True):
     st.subheader("Conferência do concurso")
 
@@ -578,6 +568,7 @@ with st.container(border=True):
                 st.error(f"Erro: {e}")
 
 
+# --- Histórico ---
 with st.expander("📅 Histórico", expanded=False):
     c1, c2 = st.columns(2)
     with c1:
@@ -740,6 +731,7 @@ with st.expander("📅 Histórico", expanded=False):
         st.metric("Total (líquido)", formatar_moeda_br(total_periodo))
 
 
+# --- Sugestão de jogos ---
 with st.expander("📊 Sugestão de jogos", expanded=False):
     a1, a2 = st.columns(2)
     with a1:
