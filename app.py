@@ -38,14 +38,14 @@ def aplicar_tema_visual(modo: str):
 
     light_vars = """
       :root{
-        --max: 980px;
-        --space-1: 8px;
-        --space-2: 12px;
-        --space-3: 16px;
-        --space-4: 20px;
-        --space-5: 24px;
-        --radius-1: 12px;
-        --radius-2: 16px;
+        --max: 900px;  /* REDUZIDO para telas menores e layout mais compacto */
+        --space-1: 6px;  /* REDUZIDO para espaçamento mais apertado */
+        --space-2: 10px;
+        --space-3: 14px;
+        --space-4: 18px;
+        --space-5: 22px;
+        --radius-1: 10px;  /* REDUZIDO para bordas mais suaves */
+        --radius-2: 14px;
 
         --blue: #1F5AFF;
         --blue-border: rgba(31,90,255,0.16);
@@ -82,14 +82,14 @@ def aplicar_tema_visual(modo: str):
 
     dark_vars = """
       :root{
-        --max: 980px;
-        --space-1: 8px;
-        --space-2: 12px;
-        --space-3: 16px;
-        --space-4: 20px;
-        --space-5: 24px;
-        --radius-1: 12px;
-        --radius-2: 16px;
+        --max: 900px;  /* REDUZIDO */
+        --space-1: 6px;  /* REDUZIDO */
+        --space-2: 10px;
+        --space-3: 14px;
+        --space-4: 18px;
+        --space-5: 22px;
+        --radius-1: 10px;  /* REDUZIDO */
+        --radius-2: 14px;
 
         --blue: #7AA2FF;
         --blue-border: rgba(122,162,255,0.22);
@@ -147,8 +147,8 @@ def aplicar_tema_visual(modo: str):
           {vars_css}
 
           .block-container{{
-            padding-top: 1.1rem;
-            padding-bottom: 2rem;
+            padding-top: 1rem;  /* REDUZIDO */
+            padding-bottom: 1.5rem;  /* REDUZIDO */
             max-width: var(--max);
           }}
 
@@ -164,20 +164,20 @@ def aplicar_tema_visual(modo: str):
 
           /* >>> TOGGLE VISUAL: deixa o seletor bem visível em ambos os modos */
           div[data-testid="stToggle"] {{
-            padding: 12px 14px;
-            border-radius: 16px;
+            padding: 10px 12px;  /* REDUZIDO */
+            border-radius: var(--radius-1);
             border: 2px solid var(--toggle-outline);
             background: var(--toggle-bg);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);  /* REDUZIDO */
             transition: all 0.2s ease;
           }}
           div[data-testid="stToggle"]:hover {{
-            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.20);  /* REDUZIDO */
             border-color: var(--blue);
           }}
           div[data-testid="stToggle"] label {{
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;  /* REDUZIDO */
             color: var(--text);
           }}
           div[data-testid="stToggle"] label span {{
@@ -189,72 +189,72 @@ def aplicar_tema_visual(modo: str):
           }}
           div[data-testid="stToggle"] label span::before {{
             background-color: var(--toggle-knob) !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
             width: 18px;
             height: 18px;
           }}
           div[data-testid="stToggle"] label:focus-within {{
             outline: 3px solid var(--toggle-outline);
             outline-offset: 2px;
-            border-radius: 16px;
+            border-radius: var(--radius-1);
           }}
 
           /* HEADER */
           #lf-header{{
             position: relative;
             overflow: hidden;
-            padding: var(--space-4) var(--space-4);
-            border-radius: var(--radius-2);
+            padding: var(--space-3) var(--space-3);  /* REDUZIDO */
+            border-radius: var(--radius-1);  /* REDUZIDO */
             background: linear-gradient(135deg, var(--header-grad-a), var(--header-grad-b));
             border: 1px solid var(--blue-border);
-            margin-bottom: var(--space-3);
+            margin-bottom: var(--space-2);  /* REDUZIDO */
           }}
           #lf-header::before{{
             content:"";
             position:absolute;
             top:-85px;
             right:-85px;
-            width: 260px;
-            height: 260px;
+            width: 200px;  /* REDUZIDO */
+            height: 200px;  /* REDUZIDO */
             background: radial-gradient(circle at 35% 35%, var(--header-splash), rgba(0,0,0,0) 70%);
             transform: rotate(12deg);
           }}
           #lf-header .title{{
-            font-size: 1.75rem;
-            font-weight: 850;
+            font-size: 1.5rem;  /* REDUZIDO */
+            font-weight: 800;  /* REDUZIDO */
             margin: 0;
             letter-spacing: -0.6px;
             color: var(--text);
           }}
           #lf-header .subtitle{{
-            margin: 6px 0 0 0;
-            font-size: 0.98rem;
+            margin: 4px 0 0 0;  /* REDUZIDO */
+            font-size: 0.9rem;  /* REDUZIDO */
             color: var(--blue);
-            font-weight: 650;
+            font-weight: 600;  /* REDUZIDO */
           }}
           #lf-header .caption{{
-            margin-top: 6px;
+            margin-top: 4px;  /* REDUZIDO */
             color: var(--header-caption);
-            font-size: 0.92rem;
+            font-size: 0.85rem;  /* REDUZIDO */
           }}
 
           /* Botões */
           div.stButton > button{{
             border-radius: var(--radius-1);
-            padding: 0.55rem 1rem;
-            font-weight: 650;
+            padding: 0.5rem 0.9rem;  /* REDUZIDO */
+            font-weight: 600;  /* REDUZIDO */
           }}
 
           /* Chips */
-          .chip-wrap{{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 4px 0; }}
+          .chip-wrap{{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 2px 0; }}  /* REDUZIDO */
           .chip{{
-            width:38px; height:38px;
+            width:36px; height:36px;  /* REDUZIDO */
             border-radius:999px;
             display:inline-flex;
             align-items:center;
             justify-content:center;
-            font-weight:750;
-            font-size:14px;
+            font-weight:700;  /* REDUZIDO */
+            font-size:13px;  /* REDUZIDO */
             user-select:none;
             border:1px solid var(--chip-border);
             background: var(--chip-bg);
@@ -274,21 +274,21 @@ def aplicar_tema_visual(modo: str):
           /* Métricas */
           [data-testid="stMetric"]{{
             background: var(--card-bg);
-            padding: var(--space-3);
+            padding: var(--space-2);  /* REDUZIDO */
             border-radius: var(--radius-1);
           }}
-          [data-testid="stMetricLabel"] p{{ color: var(--muted) !important; }}
+          [data-testid="stMetricLabel"] p{{ color: var(--muted) !important; font-size: 0.85rem !important; }}  /* REDUZIDO */
 
           .small-muted{{
-            font-size: 0.90rem;
+            font-size: 0.85rem;  /* REDUZIDO */
             color: var(--muted);
-            margin-top: 0.15rem;
-            margin-bottom: 0.35rem;
-            line-height: 1.2rem;
+            margin-top: 0.1rem;  /* REDUZIDO */
+            margin-bottom: 0.3rem;  /* REDUZIDO */
+            line-height: 1.1rem;  /* REDUZIDO */
             word-break: break-word;
           }}
 
-          hr{{ margin: 0.7rem 0; opacity: 0.55; }}
+          hr{{ margin: 0.5rem 0; opacity: 0.55; }}  /* REDUZIDO */
         </style>
         """,
         unsafe_allow_html=True,
@@ -775,7 +775,7 @@ with st.expander("📅 Histórico", expanded=False):
 
         total_periodo = 0.0
 
-        cols_per_row = 2
+        cols_per_row = 3  # ALTERADO de 2 para 3 (layout mais compacto)
         cols = st.columns(cols_per_row)
 
         for i, dia in enumerate(dias):
