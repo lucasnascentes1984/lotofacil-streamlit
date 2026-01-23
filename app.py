@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date
 
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("VERSAO-TESTE-2026-01-14-001")
+st.write("Feito por: Lucas Nascentes")
 
 # --- Jogos ---
 GAMES: List[List[int]] = [
@@ -70,6 +70,13 @@ def aplicar_tema_visual(modo: str):
         --header-grad-b: rgba(31,90,255,0.03);
         --header-splash: rgba(31,90,255,0.34);
         --header-caption: rgba(15, 23, 42, 0.62);
+
+        /* >>> TOGGLE VISUAL (CLARO) - MESMO ESTILO "FORTE" DO ESCURO */
+        --toggle-track-off: rgba(148,163,184,0.60);
+        --toggle-track-on: rgba(31,90,255,0.95);
+        --toggle-knob: #ffffff;
+        --toggle-outline: rgba(31,90,255,0.85);
+        --toggle-bg: rgba(2, 6, 23, 0.10);
       }
     """
 
@@ -107,6 +114,13 @@ def aplicar_tema_visual(modo: str):
         --header-grad-b: rgba(122,162,255,0.04);
         --header-splash: rgba(122,162,255,0.40);
         --header-caption: rgba(226,232,240,0.76);
+
+        /* >>> TOGGLE VISUAL (ESCURO) */
+        --toggle-track-off: rgba(148,163,184,0.30);
+        --toggle-track-on: rgba(122,162,255,0.92);
+        --toggle-knob: rgba(255,255,255,0.95);
+        --toggle-outline: rgba(122,162,255,0.45);
+        --toggle-bg: rgba(122,162,255,0.08);
       }
     """
 
@@ -146,6 +160,43 @@ def aplicar_tema_visual(modo: str):
           }}
           .stCaption, .stCaption p {{
             color: var(--muted) !important;
+          }}
+
+          /* >>> TOGGLE VISUAL: deixa o seletor bem visível em ambos os modos */
+          div[data-testid="stToggle"] {{
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 2px solid var(--toggle-outline);
+            background: var(--toggle-bg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+          }}
+          div[data-testid="stToggle"]:hover {{
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            border-color: var(--blue);
+          }}
+          div[data-testid="stToggle"] label {{
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+          }}
+          div[data-testid="stToggle"] label span {{
+            background-color: var(--toggle-track-off) !important;
+            border-radius: 12px;
+          }}
+          div[data-testid="stToggle"] label input:checked + span {{
+            background-color: var(--toggle-track-on) !important;
+          }}
+          div[data-testid="stToggle"] label span::before {{
+            background-color: var(--toggle-knob) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            width: 18px;
+            height: 18px;
+          }}
+          div[data-testid="stToggle"] label:focus-within {{
+            outline: 3px solid var(--toggle-outline);
+            outline-offset: 2px;
+            border-radius: 16px;
           }}
 
           /* HEADER */
@@ -485,13 +536,45 @@ def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str
     return sorted(jogo)
 
 
-# --- Toggle no topo: Claro ↔ Escuro ---
+# --- TELA INICIAL DE SELEÇÃO DE TEMA ---
+if "tema_selecionado" not in st.session_state:
+    st.session_state["tema_selecionado"] = None
+
+if st.session_state["tema_selecionado"] is None:
+    # Tela de seleção (antes de aplicar tema)
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 2rem;">
+          <h1>🎯 Lotofácil 2026</h1>
+          <p style="font-size: 1.2rem; margin: 1rem 0;">Qual aparência você deseja usar?</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("☀️ Claro", type="primary", use_container_width=True):
+            st.session_state["tema_selecionado"] = "Claro"
+            st.rerun()
+    with col2:
+        if st.button("🌙 Escuro", type="primary", use_container_width=True):
+            st.session_state["tema_selecionado"] = "Escuro"
+            st.rerun()
+
+    st.stop()  # Para aqui até selecionar
+
+# --- Aplicar tema selecionado ---
+modo_visual = st.session_state["tema_selecionado"]
+aplicar_tema_visual(modo_visual)
+
+# --- Toggle no topo (opcional, como backup) ---
 top_left, top_right = st.columns([3, 1])
 with top_right:
-    modo_escuro = st.toggle("Escuro", value=False, help="Desligado = Claro | Ligado = Escuro")
-
-modo_visual = "Escuro" if modo_escuro else "Claro"
-aplicar_tema_visual(modo_visual)
+    modo_escuro_toggle = st.toggle("Escuro", value=(modo_visual == "Escuro"), help="Desligado = Claro | Ligado = Escuro")
+    if modo_escuro_toggle != (modo_visual == "Escuro"):
+        st.session_state["tema_selecionado"] = "Escuro" if modo_escuro_toggle else "Claro"
+        st.rerun()
 
 # --- Header ---
 st.markdown(
@@ -627,7 +710,6 @@ with st.expander("📅 Histórico", expanded=False):
 
                             if dt_ini <= dt_concurso <= dt_fim:
                                 sorteadas = extrair_dezenas_sorteadas(data)
-
                                 total_fixos = total_por_grupo(data, sorteadas, GAMES)
                                 total_extras = total_por_grupo(data, sorteadas, EXTRA_GAMES)
 
@@ -781,4 +863,3 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
 
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
-
