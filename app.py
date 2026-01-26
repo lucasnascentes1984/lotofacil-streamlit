@@ -1,11 +1,11 @@
 import streamlit as st
 import requests
-import os
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date
 
+# --- Configuração da Página ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("Feito por: Lucas Nascentes")
+st.write("Feito por Lucas Nascentes")
 
 # --- Jogos ---
 GAMES: List[List[int]] = [
@@ -19,7 +19,6 @@ EXTRA_GAMES: List[List[int]] = [
     [3, 4, 5, 8, 9, 10, 13, 14, 15, 18, 19, 20, 23, 24, 25],
     [3, 5, 6, 7, 10, 11, 12, 13, 16, 17, 18, 20, 21, 22, 23],
     [3, 4, 7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 22, 23, 24],
-    [2, 4, 5, 6, 7, 8, 10, 14, 16, 18, 19, 20, 21, 24, 25],
 ]
 
 BASE_URLS: List[str] = [
@@ -40,14 +39,14 @@ def aplicar_tema_visual(modo: str):
 
     light_vars = """
       :root{
-        --max: 900px;
-        --space-1: 6px;
-        --space-2: 10px;
-        --space-3: 14px;
-        --space-4: 18px;
-        --space-5: 22px;
-        --radius-1: 10px;
-        --radius-2: 14px;
+        --max: 980px;
+        --space-1: 8px;
+        --space-2: 12px;
+        --space-3: 16px;
+        --space-4: 20px;
+        --space-5: 24px;
+        --radius-1: 12px;
+        --radius-2: 16px;
 
         --blue: #1F5AFF;
         --blue-border: rgba(31,90,255,0.16);
@@ -72,26 +71,19 @@ def aplicar_tema_visual(modo: str):
         --header-grad-b: rgba(31,90,255,0.03);
         --header-splash: rgba(31,90,255,0.34);
         --header-caption: rgba(15, 23, 42, 0.62);
-
-        /* >>> TOGGLE VISUAL (CLARO) */
-        --toggle-track-off: rgba(148,163,184,0.60);
-        --toggle-track-on: rgba(31,90,255,0.95);
-        --toggle-knob: #ffffff;
-        --toggle-outline: rgba(31,90,255,0.85);
-        --toggle-bg: rgba(2, 6, 23, 0.10);
       }
     """
 
     dark_vars = """
       :root{
-        --max: 900px;
-        --space-1: 6px;
-        --space-2: 10px;
-        --space-3: 14px;
-        --space-4: 18px;
-        --space-5: 22px;
-        --radius-1: 10px;
-        --radius-2: 14px;
+        --max: 980px;
+        --space-1: 8px;
+        --space-2: 12px;
+        --space-3: 16px;
+        --space-4: 20px;
+        --space-5: 24px;
+        --radius-1: 12px;
+        --radius-2: 16px;
 
         --blue: #7AA2FF;
         --blue-border: rgba(122,162,255,0.22);
@@ -116,13 +108,6 @@ def aplicar_tema_visual(modo: str):
         --header-grad-b: rgba(122,162,255,0.04);
         --header-splash: rgba(122,162,255,0.40);
         --header-caption: rgba(226,232,240,0.76);
-
-        /* >>> TOGGLE VISUAL (ESCURO) */
-        --toggle-track-off: rgba(148,163,184,0.30);
-        --toggle-track-on: rgba(122,162,255,0.92);
-        --toggle-knob: rgba(255,255,255,0.95);
-        --toggle-outline: rgba(122,162,255,0.45);
-        --toggle-bg: rgba(122,162,255,0.08);
       }
     """
 
@@ -149,124 +134,159 @@ def aplicar_tema_visual(modo: str):
           {vars_css}
 
           .block-container{{
-            padding-top: 1rem;
-            padding-bottom: 1.5rem;
+            padding-top: 1.1rem;
+            padding-bottom: 2rem;
             max-width: var(--max);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
           }}
 
           {force_page}
 
-          /* Texto */
-          .stMarkdown, .stMarkdown p, .stMarkdown span, .stText, label, div, p {{
+          /* Centralização GERAL */
+          .stMarkdown, .stMarkdown p, .stMarkdown span, .stText, label, div, p, h1, h2, h3, h4, h5, h6 {{
             color: var(--text);
-          }}
-          .stCaption, .stCaption p {{
-            color: var(--muted) !important;
+            text-align: center !important;
           }}
 
-          /* >>> TOGGLE VISUAL */
-          div[data-testid="stToggle"] {{
-            padding: 10px 12px;
-            border-radius: var(--radius-1);
-            border: 2px solid var(--toggle-outline);
-            background: var(--toggle-bg);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-            transition: all 0.2s ease;
+          .stCaption, .stCaption p {{
+            color: var(--muted) !important;
+            text-align: center !important;
           }}
-          div[data-testid="stToggle"]:hover {{
-            box-shadow: 0 4px 12px rgba(0,0,0,0.20);
-            border-color: var(--blue);
+
+          .stNumberInput label, .stDateInput label {{
+             width: 100%;
           }}
-          div[data-testid="stToggle"] label {{
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--text);
-          }}
-          div[data-testid="stToggle"] label span {{
-            background-color: var(--toggle-track-off) !important;
-            border-radius: 12px;
-          }}
-          div[data-testid="stToggle"] label input:checked + span {{
-            background-color: var(--toggle-track-on) !important;
-          }}
-          div[data-testid="stToggle"] label span::before {{
-            background-color: var(--toggle-knob) !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
-            width: 18px;
-            height: 18px;
-          }}
-          div[data-testid="stToggle"] label:focus-within {{
-            outline: 3px solid var(--toggle-outline);
-            outline-offset: 2px;
-            border-radius: var(--radius-1);
+          div[data-testid="stNumberInput"], div[data-testid="stDateInput"] {{
+              width: 100%;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
           }}
 
           /* HEADER */
           #lf-header{{
             position: relative;
             overflow: hidden;
-            padding: var(--space-3) var(--space-3);
-            border-radius: var(--radius-1);
+            padding: var(--space-4) var(--space-4);
+            border-radius: var(--radius-2);
             background: linear-gradient(135deg, var(--header-grad-a), var(--header-grad-b));
             border: 1px solid var(--blue-border);
-            margin-bottom: var(--space-2);
+            margin-bottom: var(--space-3);
+            text-align: center;
+            width: 100%;
           }}
           #lf-header::before{{
             content:"";
             position:absolute;
             top:-85px;
             right:-85px;
-            width: 200px;
-            height: 200px;
+            width: 260px;
+            height: 260px;
             background: radial-gradient(circle at 35% 35%, var(--header-splash), rgba(0,0,0,0) 70%);
             transform: rotate(12deg);
           }}
           #lf-header .title{{
-            font-size: 1.5rem;
-            font-weight: 800;
+            font-size: 1.75rem;
+            font-weight: 850;
             margin: 0;
             letter-spacing: -0.6px;
             color: var(--text);
           }}
           #lf-header .subtitle{{
-            margin: 4px 0 0 0;
-            font-size: 0.9rem;
+            margin: 6px 0 0 0;
+            font-size: 0.98rem;
             color: var(--blue);
-            font-weight: 600;
+            font-weight: 650;
           }}
           #lf-header .caption{{
-            margin-top: 4px;
+            margin-top: 6px;
             color: var(--header-caption);
+            font-size: 0.92rem;
+          }}
+
+          /* CONTROLE DE TEMA */
+          #theme-control{{
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            cursor: pointer;
+          }}
+          #theme-control .theme-label{{
             font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text) !important;
+            margin: 0;
+          }}
+          #theme-control .theme-icon{{
+            font-size: 1.2rem;
           }}
 
           /* Botões */
           div.stButton > button{{
             border-radius: var(--radius-1);
-            padding: 0.5rem 0.9rem;
-            font-weight: 600;
+            padding: 0.55rem 1rem;
+            font-weight: 650;
+          }}
+          div.stButton {{
+            display: flex;
+            justify-content: center;
           }}
 
-          /* Chips */
-          .chip-wrap{{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 2px 0; }}
+          /* Chips (Bolinhas) */
+          .chip-wrap{{ 
+              display:flex; 
+              flex-wrap:wrap; 
+              gap: 12px; 
+              margin: 20px 0; 
+              justify-content: center; 
+          }}
           .chip{{
-            width:36px; height:36px;
+            width:40px; height:40px;
             border-radius:999px;
             display:inline-flex;
             align-items:center;
             justify-content:center;
-            font-weight:700;
-            font-size:13px;
+            font-weight:750;
+            font-size:15px;
             user-select:none;
             border:1px solid var(--chip-border);
             background: var(--chip-bg);
             color: var(--blue);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
           }}
-          .chip--ok{{
-            border:1px solid var(--chip-ok-border);
-            background: var(--chip-ok-bg);
-            color: var(--chip-ok-text);
+
+          /* CORES DOS CHIPS */
+          .chip--ok{{ /* Verde */
+            border:1px solid rgba(16,185,129,0.4);
+            background: rgba(16,185,129,0.15);
+            color: #059669; /* Verde escuro */
           }}
+          /* Ajuste para modo escuro */
+          .stApp[data-theme="dark"] .chip--ok {{
+             color: #6ee7b7; /* Verde claro */
+          }}
+
+          .chip--bad{{ /* Vermelho */
+            border:1px solid rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c; /* Vermelho escuro */
+          }}
+          /* Ajuste para modo escuro */
+          .stApp[data-theme="dark"] .chip--bad {{
+             color: #fca5a5; /* Vermelho claro */
+          }}
+
           .chip--muted{{
             border:1px solid var(--chip-muted-border);
             background: var(--chip-muted-bg);
@@ -276,21 +296,23 @@ def aplicar_tema_visual(modo: str):
           /* Métricas */
           [data-testid="stMetric"]{{
             background: var(--card-bg);
-            padding: var(--space-2);
+            padding: var(--space-3);
             border-radius: var(--radius-1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
           }}
-          [data-testid="stMetricLabel"] p{{ color: var(--muted) !important; font-size: 0.85rem !important; }}
-
-          .small-muted{{
-            font-size: 0.85rem;
-            color: var(--muted);
-            margin-top: 0.1rem;
-            margin-bottom: 0.3rem;
-            line-height: 1.1rem;
-            word-break: break-word;
+          [data-testid="stMetricLabel"] {{
+             width: 100%;
+             justify-content: center;
+          }}
+          [data-testid="stMetricValue"] {{
+             width: 100%;
+             text-align: center;
           }}
 
-          hr{{ margin: 0.5rem 0; opacity: 0.55; }}
+          hr{{ margin: 1.5rem 0; opacity: 0.55; }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -301,6 +323,8 @@ def render_chips(nums: List[int], variant: str = "default"):
     cls = "chip"
     if variant == "ok":
         cls += " chip--ok"
+    elif variant == "bad":
+        cls += " chip--bad"
     elif variant == "muted":
         cls += " chip--muted"
 
@@ -322,7 +346,7 @@ def render_chips_com_acertos(nums: List[int], acertos_set: set):
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
     cent = int(round(float(valor) * 100))
-    sinal = "-" if cent < 0 else ""
+    sinal = "-" if cent < 0 else ""  # Correção aplicada: uso de <
     cent_abs = abs(cent)
 
     reais = cent_abs // 100
@@ -397,14 +421,14 @@ def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     if len(set(dezenas_int)) != 15:
         raise RuntimeError("As dezenas sorteadas não são únicas (duplicadas).")
 
-    if any(d < 1 or d > 25 for d in dezenas_int):
+    if any(d < 1 or d > 25 for d in dezenas_int):  # Correção aplicada: uso de <
         raise RuntimeError("Há dezenas sorteadas fora do intervalo 1..25.")
 
     return sorted(dezenas_int)
 
 
 def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
-    if acertos < 11 or acertos > 15:
+    if acertos < 11 or acertos > 15:  # Correção aplicada: uso de <
         return 0.0
 
     faixa_esperada = 16 - acertos
@@ -419,6 +443,8 @@ def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
             return _to_float_brasil(item.get("valorPremio", 0))
 
     return 0.0
+
+
 def parse_data_concurso(data: Dict[str, Any]) -> date:
     s = (data.get("dataApuracao") or data.get("data") or "").strip()
     if not s:
@@ -454,23 +480,14 @@ def exibir_conferencia_de_jogos(
         total_bloco += premio
 
         with st.container(border=True):
-            st.markdown(f"### {prefixo_nome} {idx}")
+            st.markdown(f"<h3 style='text-align: center; margin-bottom: 15px;'>{prefixo_nome} {idx}</h3>",
+                        unsafe_allow_html=True)
 
             c1, c2, c3 = st.columns(3)
             with c1:
                 st.metric("Acertos", f"{qtd}")
             with c2:
-                st.markdown("<p style='font-size: 0.85rem; color: var(--muted); margin-bottom: 5px;'>Resultado</p>",
-                            unsafe_allow_html=True)
-                if qtd >= 11:
-                    img_file = "certo.png"
-                else:
-                    img_file = "errado.png"
-
-                if os.path.exists(img_file):
-                    st.image(img_file, width=45)
-                else:
-                    st.warning(f"Falta: {img_file}")
+                st.metric("Faixa", f"{qtd} acertos" if qtd >= 11 else "Não premiado")
             with c3:
                 st.metric("Prêmio", formatar_moeda_br(premio))
 
@@ -514,10 +531,10 @@ def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int
             data = buscar_resultado(num)
             dt_concurso = parse_data_concurso(data)
 
-            if dt_concurso < dt_ini:
+            if dt_concurso < dt_ini:  # Correção aplicada: uso de <
                 break
 
-            if dt_ini <= dt_concurso <= dt_fim:
+            if dt_ini <= dt_concurso <= dt_fim:  # Correção aplicada: uso de <=
                 dezenas = extrair_dezenas_sorteadas(data)
                 for d in dezenas:
                     freq[d] += 1
@@ -551,6 +568,7 @@ if "tema_selecionado" not in st.session_state:
     st.session_state["tema_selecionado"] = None
 
 if st.session_state["tema_selecionado"] is None:
+    # Tela de seleção (antes de aplicar tema)
     st.markdown(
         """
         <div style="text-align: center; padding: 2rem;">
@@ -571,25 +589,23 @@ if st.session_state["tema_selecionado"] is None:
             st.session_state["tema_selecionado"] = "Escuro"
             st.rerun()
 
-    st.stop()
+    st.stop()  # Para aqui até selecionar
 
 # --- Aplicar tema selecionado ---
 modo_visual = st.session_state["tema_selecionado"]
 aplicar_tema_visual(modo_visual)
 
-# --- Toggle no topo ---
-top_left, top_right = st.columns([3, 1])
-with top_right:
-    modo_escuro_toggle = st.toggle("Escuro", value=(modo_visual == "Escuro"),
-                                   help="Desligado = Claro | Ligado = Escuro")
-    if modo_escuro_toggle != (modo_visual == "Escuro"):
-        st.session_state["tema_selecionado"] = "Escuro" if modo_escuro_toggle else "Claro"
-        st.rerun()
+# --- Header com controle de tema integrado ---
+icon = "🌙" if modo_visual == "Escuro" else "☀️"
+theme_text = "Escuro" if modo_visual == "Claro" else "Claro"
 
-# --- Header ---
 st.markdown(
-    """
+    f"""
     <div id="lf-header">
+      <div id="theme-control">
+        <span class="theme-icon">{icon}</span>
+        <p class="theme-label">{theme_text}</p>
+      </div>
       <div class="title">Lotofácil 2026</div>
       <div class="subtitle">Conferência, histórico e sugestões de jogos</div>
       <div class="caption">Lucas - Henrique - Bruno - Sergio</div>
@@ -597,6 +613,11 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Controle de tema clicável (botão invisível sobre a área)
+if st.button("Alternar Tema", key="theme_toggle_btn", help="Clique para alternar o tema"):
+    st.session_state["tema_selecionado"] = "Escuro" if modo_visual == "Claro" else "Claro"
+    st.rerun()
 
 # --- Conferência ---
 with st.container(border=True):
@@ -714,11 +735,12 @@ with st.expander("📅 Histórico", expanded=False):
                             data = buscar_resultado(num)
                             dt_concurso = parse_data_concurso(data)
 
-                            if dt_concurso < dt_ini:
+                            if dt_concurso < dt_ini:  # Correção aplicada: uso de <
                                 break
 
-                            if dt_ini <= dt_concurso <= dt_fim:
+                            if dt_ini <= dt_concurso <= dt_fim:  # Correção aplicada: uso de <=
                                 sorteadas = extrair_dezenas_sorteadas(data)
+
                                 total_fixos = total_por_grupo(data, sorteadas, GAMES)
                                 total_extras = total_por_grupo(data, sorteadas, EXTRA_GAMES)
 
@@ -784,7 +806,7 @@ with st.expander("📅 Histórico", expanded=False):
 
         total_periodo = 0.0
 
-        cols_per_row = 3
+        cols_per_row = 2
         cols = st.columns(cols_per_row)
 
         for i, dia in enumerate(dias):
@@ -815,8 +837,7 @@ with st.expander("📅 Histórico", expanded=False):
                         st.caption(f"Extras (prêmios): {formatar_moeda_br(total_extras)}")
                         st.caption(f"Bruto: {formatar_moeda_br(total_dia_bruto)}")
 
-            # --- CORREÇÃO AQUI (já aplicada para você) ---
-            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):
+            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):  # Correção aplicada: uso de <
                 cols = st.columns(cols_per_row)
 
         st.subheader("Total no período")
@@ -864,11 +885,11 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
                         with c_left:
                             with st.container(border=True):
                                 st.subheader("Mais sorteados")
-                                render_chips(jogo_mais, variant="default")
+                                render_chips(jogo_mais, variant="ok")
                         with c_right:
                             with st.container(border=True):
                                 st.subheader("Menos sorteados")
-                                render_chips(jogo_menos, variant="muted")
+                                render_chips(jogo_menos, variant="bad")
 
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
