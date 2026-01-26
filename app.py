@@ -7,7 +7,7 @@ import random
 
 # --- Configuração da Página ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("VERSAO-TESTE-2026-01-14-FINAL-V10")
+st.write("Feito por Lucas Nascentes")
 
 # --- Jogos ---
 GAMES: List[List[int]] = [
@@ -918,3 +918,4 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
 
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
+
