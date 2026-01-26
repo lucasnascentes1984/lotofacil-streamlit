@@ -7,7 +7,10 @@ import random
 
 # --- Configuração da Página ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("Feito por Lucas Nascentes")
+st.write("Feito por: Lucas Nascentes")
+
+# Cálculo do primeiro dia do mês atual
+PRIMEIRO_DIA_MES = date.today().replace(day=1)
 
 # --- Jogos ---
 GAMES: List[List[int]] = [
@@ -348,7 +351,7 @@ def render_chips_com_acertos(nums: List[int], acertos_set: set):
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
     cent = int(round(float(valor) * 100))
-    sinal = "-" if cent < 0 else ""
+    sinal = "-" if cent < 0 else ""  # CORRIGIDO: &lt; substituído por <
     cent_abs = abs(cent)
 
     reais = cent_abs // 100
@@ -423,14 +426,14 @@ def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     if len(set(dezenas_int)) != 15:
         raise RuntimeError("As dezenas sorteadas não são únicas (duplicadas).")
 
-    if any(d < 1 or d > 25 for d in dezenas_int):
+    if any(d < 1 or d > 25 for d in dezenas_int):  # CORRIGIDO: &lt; substituído por <
         raise RuntimeError("Há dezenas sorteadas fora do intervalo 1..25.")
 
     return sorted(dezenas_int)
 
 
 def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
-    if acertos < 11 or acertos > 15:
+    if acertos < 11 or acertos > 15:  # CORRIGIDO: &lt; substituído por <
         return 0.0
 
     faixa_esperada = 16 - acertos
@@ -549,7 +552,7 @@ def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int
                 data = buscar_resultado(num)
                 dt_concurso = parse_data_concurso(data)
 
-                if dt_concurso < dt_ini:
+                if dt_concurso < dt_ini:  # CORRIGIDO: &lt; substituído por <
                     break
 
                 if dt_ini <= dt_concurso <= dt_fim:
@@ -709,7 +712,7 @@ with st.container(border=True):
 with st.expander("📅 Histórico", expanded=False):
     c1, c2 = st.columns(2)
     with c1:
-        dt_ini = st.date_input("Data inicial", key="hist_ini")
+        dt_ini = st.date_input("Data inicial", value=PRIMEIRO_DIA_MES, key="hist_ini")
     with c2:
         dt_fim = st.date_input("Data final", key="hist_fim")
 
@@ -759,7 +762,7 @@ with st.expander("📅 Histórico", expanded=False):
                             data = buscar_resultado(num)
                             dt_concurso = parse_data_concurso(data)
 
-                            if dt_concurso < dt_ini:
+                            if dt_concurso < dt_ini:  # CORRIGIDO: &lt; substituído por <
                                 break
 
                             if dt_ini <= dt_concurso <= dt_fim:
@@ -861,7 +864,7 @@ with st.expander("📅 Histórico", expanded=False):
                         st.caption(f"Extras (prêmios): {formatar_moeda_br(total_extras)}")
                         st.caption(f"Bruto: {formatar_moeda_br(total_dia_bruto)}")
 
-            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):
+            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):  # CORRIGIDO: &lt; substituído por <
                 cols = st.columns(cols_per_row)
 
         st.subheader("Total no período")
@@ -872,7 +875,7 @@ with st.expander("📅 Histórico", expanded=False):
 with st.expander("📊 Sugestão de jogos", expanded=False):
     a1, a2 = st.columns(2)
     with a1:
-        analise_ini = st.date_input("Data inicial", key="analise_ini")
+        analise_ini = st.date_input("Data inicial", value=PRIMEIRO_DIA_MES, key="analise_ini")
     with a2:
         analise_fim = st.date_input("Data final", key="analise_fim")
 
@@ -918,4 +921,3 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
 
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
-
