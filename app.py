@@ -2,10 +2,12 @@ import streamlit as st
 import requests
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date
+import base64
+import random
 
 # --- Configuração da Página ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("Feito por Lucas Nascentes")
+st.write("VERSAO-TESTE-2026-01-14-FINAL-V10")
 
 # --- Jogos ---
 GAMES: List[List[int]] = [
@@ -206,32 +208,6 @@ def aplicar_tema_visual(modo: str):
             font-size: 0.92rem;
           }}
 
-          /* CONTROLE DE TEMA */
-          #theme-control{{
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            z-index: 10;
-            cursor: pointer;
-          }}
-          #theme-control .theme-label{{
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text) !important;
-            margin: 0;
-          }}
-          #theme-control .theme-icon{{
-            font-size: 1.2rem;
-          }}
-
           /* Botões */
           div.stButton > button{{
             border-radius: var(--radius-1);
@@ -243,7 +219,7 @@ def aplicar_tema_visual(modo: str):
             justify-content: center;
           }}
 
-          /* Chips (Bolinhas) */
+          /* Chips (Bolinhas) - AUMENTADAS */
           .chip-wrap{{ 
               display:flex; 
               flex-wrap:wrap; 
@@ -252,13 +228,13 @@ def aplicar_tema_visual(modo: str):
               justify-content: center; 
           }}
           .chip{{
-            width:40px; height:40px;
+            width:50px; height:50px;
             border-radius:999px;
             display:inline-flex;
             align-items:center;
             justify-content:center;
             font-weight:750;
-            font-size:15px;
+            font-size:16px;
             user-select:none;
             border:1px solid var(--chip-border);
             background: var(--chip-bg);
@@ -267,24 +243,22 @@ def aplicar_tema_visual(modo: str):
           }}
 
           /* CORES DOS CHIPS */
-          .chip--ok{{ /* Verde */
+          .chip--ok{{
             border:1px solid rgba(16,185,129,0.4);
             background: rgba(16,185,129,0.15);
-            color: #059669; /* Verde escuro */
+            color: #059669;
           }}
-          /* Ajuste para modo escuro */
           .stApp[data-theme="dark"] .chip--ok {{
-             color: #6ee7b7; /* Verde claro */
+             color: #6ee7b7;
           }}
 
-          .chip--bad{{ /* Vermelho */
+          .chip--bad{{
             border:1px solid rgba(239, 68, 68, 0.4);
             background: rgba(239, 68, 68, 0.15);
-            color: #b91c1c; /* Vermelho escuro */
+            color: #b91c1c;
           }}
-          /* Ajuste para modo escuro */
           .stApp[data-theme="dark"] .chip--bad {{
-             color: #fca5a5; /* Vermelho claro */
+             color: #fca5a5;
           }}
 
           .chip--muted{{
@@ -318,6 +292,34 @@ def aplicar_tema_visual(modo: str):
         unsafe_allow_html=True,
     )
 
+    st.markdown(
+        """
+        <style>
+          /* Centralizador para imagens status (certo/errado) */
+          .status-wrap{
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .status-img{
+            width: 60px;
+            height: auto;
+            display: block;
+          }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def img_to_data_uri(path: str) -> str:
+    with open(path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode("utf-8")
+    ext = path.split(".")[-1].lower()
+    mime = "image/png" if ext == "png" else "image/jpeg"
+    return f"data:{mime};base64,{b64}"
+
 
 def render_chips(nums: List[int], variant: str = "default"):
     cls = "chip"
@@ -346,7 +348,7 @@ def render_chips_com_acertos(nums: List[int], acertos_set: set):
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
     cent = int(round(float(valor) * 100))
-    sinal = "-" if cent < 0 else ""  # Correção aplicada: uso de <
+    sinal = "-" if cent < 0 else ""
     cent_abs = abs(cent)
 
     reais = cent_abs // 100
@@ -405,9 +407,9 @@ def buscar_resultado(concurso: Optional[int]) -> Dict[str, Any]:
 
 def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     dezenas = (
-            data.get("dezenasSorteadasOrdemSorteio")
-            or data.get("listaDezenas")
-            or data.get("dezenasSorteadas")
+        data.get("dezenasSorteadasOrdemSorteio")
+        or data.get("listaDezenas")
+        or data.get("dezenasSorteadas")
     )
 
     if not dezenas or not isinstance(dezenas, list):
@@ -421,14 +423,14 @@ def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     if len(set(dezenas_int)) != 15:
         raise RuntimeError("As dezenas sorteadas não são únicas (duplicadas).")
 
-    if any(d < 1 or d > 25 for d in dezenas_int):  # Correção aplicada: uso de <
+    if any(d < 1 or d > 25 for d in dezenas_int):
         raise RuntimeError("Há dezenas sorteadas fora do intervalo 1..25.")
 
     return sorted(dezenas_int)
 
 
 def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
-    if acertos < 11 or acertos > 15:  # Correção aplicada: uso de <
+    if acertos < 11 or acertos > 15:
         return 0.0
 
     faixa_esperada = 16 - acertos
@@ -462,11 +464,11 @@ def parse_data_concurso(data: Dict[str, Any]) -> date:
 
 
 def exibir_conferencia_de_jogos(
-        titulo_bloco: str,
-        jogos: List[List[int]],
-        sorteadas: List[int],
-        data: Dict[str, Any],
-        prefixo_nome: str,
+    titulo_bloco: str,
+    jogos: List[List[int]],
+    sorteadas: List[int],
+    data: Dict[str, Any],
+    prefixo_nome: str,
 ) -> float:
     total_bloco = 0.0
     st.subheader(titulo_bloco)
@@ -480,14 +482,28 @@ def exibir_conferencia_de_jogos(
         total_bloco += premio
 
         with st.container(border=True):
-            st.markdown(f"<h3 style='text-align: center; margin-bottom: 15px;'>{prefixo_nome} {idx}</h3>",
-                        unsafe_allow_html=True)
+            st.markdown(
+                f"<h3 style='text-align: center; margin-bottom: 15px;'>{prefixo_nome} {idx}</h3>",
+                unsafe_allow_html=True,
+            )
 
             c1, c2, c3 = st.columns(3)
+
             with c1:
                 st.metric("Acertos", f"{qtd}")
+
             with c2:
-                st.metric("Faixa", f"{qtd} acertos" if qtd >= 11 else "Não premiado")
+                st.markdown(
+                    "<p style='font-size: 14px; margin-bottom: 6px; color: var(--muted); text-align: center;'>Situação</p>",
+                    unsafe_allow_html=True,
+                )
+                img_file = "certo.png" if qtd >= 11 else "errado.png"
+                img_uri = img_to_data_uri(img_file)
+                st.markdown(
+                    f"""<div class="status-wrap"><img class="status-img" src="{img_uri}" alt="status"></div>""",
+                    unsafe_allow_html=True,
+                )
+
             with c3:
                 st.metric("Prêmio", formatar_moeda_br(premio))
 
@@ -516,32 +532,38 @@ def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int
     freq: Dict[int, int] = {i: 0 for i in range(1, 26)}
     concursos_encontrados = 0
 
-    data_ultimo = buscar_resultado(None)
-    ultimo_num = int(data_ultimo.get("numero") or data_ultimo.get("numeroConcurso"))
+    try:
+        data_ultimo = buscar_resultado(None)
+        ultimo_num = int(data_ultimo.get("numero") or data_ultimo.get("numeroConcurso"))
 
-    limite_concursos = 900
-    verificados = 0
+        limite_concursos = 900
+        verificados = 0
 
-    for num in range(ultimo_num, 0, -1):
-        if verificados >= limite_concursos:
-            break
-        verificados += 1
-
-        try:
-            data = buscar_resultado(num)
-            dt_concurso = parse_data_concurso(data)
-
-            if dt_concurso < dt_ini:  # Correção aplicada: uso de <
+        for num in range(ultimo_num, 0, -1):
+            if verificados >= limite_concursos:
                 break
 
-            if dt_ini <= dt_concurso <= dt_fim:  # Correção aplicada: uso de <=
-                dezenas = extrair_dezenas_sorteadas(data)
-                for d in dezenas:
-                    freq[d] += 1
-                concursos_encontrados += 1
+            verificados += 1
 
-        except Exception:
-            continue
+            try:
+                data = buscar_resultado(num)
+                dt_concurso = parse_data_concurso(data)
+
+                if dt_concurso < dt_ini:
+                    break
+
+                if dt_ini <= dt_concurso <= dt_fim:
+                    dezenas = extrair_dezenas_sorteadas(data)
+                    for d in dezenas:
+                        freq[d] += 1
+                    concursos_encontrados += 1
+
+            except Exception:
+                continue
+
+    except Exception as e:
+        st.error(f"Erro na busca de frequências: {e}")
+        return freq, 0
 
     return freq, concursos_encontrados
 
@@ -549,6 +571,9 @@ def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int
 def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str) -> List[int]:
     if qtd_dezenas not in (15, 16):
         raise RuntimeError("Quantidade de dezenas inválida (use 15 ou 16).")
+
+    if not freq or all(v == 0 for v in freq.values()):
+        return sorted(random.sample(range(1, 26), qtd_dezenas))
 
     itens = list(freq.items())
 
@@ -560,6 +585,12 @@ def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str
         raise RuntimeError("Modo inválido (use 'mais' ou 'menos').")
 
     jogo = [dez for dez, _cnt in itens[:qtd_dezenas]]
+
+    if len(jogo) != qtd_dezenas:
+        numeros_faltando = qtd_dezenas - len(jogo)
+        numeros_disponiveis = [n for n in range(1, 26) if n not in jogo]
+        jogo.extend(random.sample(numeros_disponiveis, numeros_faltando))
+
     return sorted(jogo)
 
 
@@ -568,7 +599,6 @@ if "tema_selecionado" not in st.session_state:
     st.session_state["tema_selecionado"] = None
 
 if st.session_state["tema_selecionado"] is None:
-    # Tela de seleção (antes de aplicar tema)
     st.markdown(
         """
         <div style="text-align: center; padding: 2rem;">
@@ -589,23 +619,16 @@ if st.session_state["tema_selecionado"] is None:
             st.session_state["tema_selecionado"] = "Escuro"
             st.rerun()
 
-    st.stop()  # Para aqui até selecionar
+    st.stop()
 
 # --- Aplicar tema selecionado ---
 modo_visual = st.session_state["tema_selecionado"]
 aplicar_tema_visual(modo_visual)
 
-# --- Header com controle de tema integrado ---
-icon = "🌙" if modo_visual == "Escuro" else "☀️"
-theme_text = "Escuro" if modo_visual == "Claro" else "Claro"
-
+# --- Header (sem o card Claro/Escuro do canto) ---
 st.markdown(
-    f"""
+    """
     <div id="lf-header">
-      <div id="theme-control">
-        <span class="theme-icon">{icon}</span>
-        <p class="theme-label">{theme_text}</p>
-      </div>
       <div class="title">Lotofácil 2026</div>
       <div class="subtitle">Conferência, histórico e sugestões de jogos</div>
       <div class="caption">Lucas - Henrique - Bruno - Sergio</div>
@@ -614,7 +637,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Controle de tema clicável (botão invisível sobre a área)
+# Botão para alternar tema (mantido)
 if st.button("Alternar Tema", key="theme_toggle_btn", help="Clique para alternar o tema"):
     st.session_state["tema_selecionado"] = "Escuro" if modo_visual == "Claro" else "Claro"
     st.rerun()
@@ -681,6 +704,7 @@ with st.container(border=True):
             except Exception as e:
                 st.error(f"Erro: {e}")
 
+
 # --- Histórico ---
 with st.expander("📅 Histórico", expanded=False):
     c1, c2 = st.columns(2)
@@ -735,10 +759,10 @@ with st.expander("📅 Histórico", expanded=False):
                             data = buscar_resultado(num)
                             dt_concurso = parse_data_concurso(data)
 
-                            if dt_concurso < dt_ini:  # Correção aplicada: uso de <
+                            if dt_concurso < dt_ini:
                                 break
 
-                            if dt_ini <= dt_concurso <= dt_fim:  # Correção aplicada: uso de <=
+                            if dt_ini <= dt_concurso <= dt_fim:
                                 sorteadas = extrair_dezenas_sorteadas(data)
 
                                 total_fixos = total_por_grupo(data, sorteadas, GAMES)
@@ -837,11 +861,12 @@ with st.expander("📅 Histórico", expanded=False):
                         st.caption(f"Extras (prêmios): {formatar_moeda_br(total_extras)}")
                         st.caption(f"Bruto: {formatar_moeda_br(total_dia_bruto)}")
 
-            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):  # Correção aplicada: uso de <
+            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):
                 cols = st.columns(cols_per_row)
 
         st.subheader("Total no período")
         st.metric("Total (líquido)", formatar_moeda_br(total_periodo))
+
 
 # --- Sugestão de jogos ---
 with st.expander("📊 Sugestão de jogos", expanded=False):
