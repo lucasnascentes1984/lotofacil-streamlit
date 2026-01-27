@@ -270,14 +270,33 @@ def aplicar_tema_visual(modo: str):
             color: var(--chip-muted-text);
           }}
 
-          /* CORES DOS CHIPS - NOVA COR PARA COMBINADO */
+          /* CORES DOS CHIPS - COMBINADO (AMARELO) */
           .chip--combinado{{
             border:1px solid rgba(234, 179, 8, 0.4);
             background: rgba(234, 179, 8, 0.15);
-            color: ##ca8a04;
+            color: #ca8a04;
           }}
           .stApp[data-theme="dark"] .chip--combinado {{
              color: #fde047;
+          }}
+
+          /* CORES DOS CHIPS - Jogos 16/9 */
+          .chip--jogos-mais{{
+            border:1px solid rgba(59, 130, 246, 0.4);
+            background: rgba(59, 130, 246, 0.15);
+            color: #1d4ed8;
+          }}
+          .stApp[data-theme="dark"] .chip--jogos-mais {{
+             color: #93c5fd;
+          }}
+
+          .chip--jogos-menos{{
+            border:1px solid rgba(249, 115, 22, 0.4);
+            background: rgba(249, 115, 22, 0.15);
+            color: #ea580c;
+          }}
+          .stApp[data-theme="dark"] .chip--jogos-menos {{
+             color: #fdba74;
           }}
 
           /* Métricas */
@@ -344,6 +363,10 @@ def render_chips(nums: List[int], variant: str = "default"):
         cls += " chip--muted"
     elif variant == "combinado":
         cls += " chip--combinado"
+    elif variant == "jogos-mais":
+        cls += " chip--jogos-mais"
+    elif variant == "jogos-menos":
+        cls += " chip--jogos-menos"
 
     html = '<div class="chip-wrap">' + "".join(
         f'<span class="{cls}">{n:02d}</span>' for n in nums
@@ -643,6 +666,31 @@ def montar_jogo_combinado(freq: Dict[int, int], qtd_dezenas: int) -> List[int]:
         jogo.extend(random.sample(numeros_disponiveis, numeros_faltando))
 
     return sorted(jogo)
+
+
+def montar_jogos_16_9(freq: Dict[int, int]) -> Tuple[List[int], List[int]]:
+    """
+    Retorna 16 números mais sorteados e 9 números menos sorteados.
+    """
+    if not freq or all(v == 0 for v in freq.values()):
+        todos_numeros = list(range(1, 26))
+        random.shuffle(todos_numeros)
+        mais_sorteados = sorted(todos_numeros[:16])
+        menos_sorteados = sorted(todos_numeros[16:])
+        return mais_sorteados, menos_sorteados
+
+    itens = list(freq.items())
+
+    # Ordenar por frequência (mais sorteados primeiro)
+    itens.sort(key=lambda x: (-x[1], x[0]))
+
+    # Pegar os 16 mais sorteados
+    mais_sorteados = [dez for dez, _ in itens[:16]]
+
+    # Pegar os 9 menos sorteados (últimos 9 da lista ordenada)
+    menos_sorteados = [dez for dez, _ in itens[-9:]]
+
+    return sorted(mais_sorteados), sorted(menos_sorteados)
 
 
 # --- TELA INICIAL DE SELEÇÃO DE TEMA ---
@@ -976,3 +1024,41 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
 
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
+
+    # --- JOGOS 16/9 ---
+    st.markdown("---")
+    st.subheader("🎯 Jogos 16/9")
+
+    if st.button("Gerar Jogos 16/9"):
+        if analise_ini > analise_fim:
+            st.error("A **Data inicial** não pode ser maior que a **Data final**.")
+        else:
+            with st.spinner("Calculando Jogos 16/9..."):
+                try:
+                    freq, concursos_encontrados = calcular_frequencia_no_periodo(analise_ini, analise_fim)
+
+                    if concursos_encontrados == 0:
+                        st.warning("Não encontrei concursos dentro do período selecionado.")
+                    else:
+                        mais_sorteados, menos_sorteados = montar_jogos_16_9(freq)
+
+
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+                            with st.container(border=True):
+                                st.subheader("16 Mais Sorteados")
+                                st.caption(
+                                    f"Período: {analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}")
+                                render_chips(mais_sorteados, variant="jogos-mais")
+
+                        with col2:
+                            with st.container(border=True):
+                                st.subheader("9 Menos Sorteados")
+                                st.caption(
+                                    f"Período: {analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}")
+                                render_chips(menos_sorteados, variant="jogos-menos")
+
+
+                except Exception as e:
+                    st.error(f"Erro no Jogos 16/9: {e}")
