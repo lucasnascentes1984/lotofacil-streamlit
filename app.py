@@ -257,7 +257,7 @@ def aplicar_tema_visual(modo: str):
 
           .chip--bad{{
             border:1px solid rgba(239, 68, 68, 0.4);
-            background: rgba(239, 68, 68, 0.15);
+            background: rgba(239, 68, 68,0.15);
             color: #b91c1c;
           }}
           .stApp[data-theme="dark"] .chip--bad {{
@@ -268,6 +268,16 @@ def aplicar_tema_visual(modo: str):
             border:1px solid var(--chip-muted-border);
             background: var(--chip-muted-bg);
             color: var(--chip-muted-text);
+          }}
+
+          /* CORES DOS CHIPS - NOVA COR PARA COMBINADO */
+          .chip--combinado{{
+            border:1px solid rgba(234, 179, 8, 0.4);
+            background: rgba(234, 179, 8, 0.15);
+            color: ##ca8a04;
+          }}
+          .stApp[data-theme="dark"] .chip--combinado {{
+             color: #fde047;
           }}
 
           /* Métricas */
@@ -332,6 +342,8 @@ def render_chips(nums: List[int], variant: str = "default"):
         cls += " chip--bad"
     elif variant == "muted":
         cls += " chip--muted"
+    elif variant == "combinado":
+        cls += " chip--combinado"
 
     html = '<div class="chip-wrap">' + "".join(
         f'<span class="{cls}">{n:02d}</span>' for n in nums
@@ -351,7 +363,7 @@ def render_chips_com_acertos(nums: List[int], acertos_set: set):
 # --- Utilitários ---
 def formatar_moeda_br(valor: float) -> str:
     cent = int(round(float(valor) * 100))
-    sinal = "-" if cent < 0 else ""  # CORRIGIDO: &lt; substituído por <
+    sinal = "-" if cent < 0 else ""
     cent_abs = abs(cent)
 
     reais = cent_abs // 100
@@ -410,9 +422,9 @@ def buscar_resultado(concurso: Optional[int]) -> Dict[str, Any]:
 
 def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     dezenas = (
-        data.get("dezenasSorteadasOrdemSorteio")
-        or data.get("listaDezenas")
-        or data.get("dezenasSorteadas")
+            data.get("dezenasSorteadasOrdemSorteio")
+            or data.get("listaDezenas")
+            or data.get("dezenasSorteadas")
     )
 
     if not dezenas or not isinstance(dezenas, list):
@@ -426,14 +438,14 @@ def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     if len(set(dezenas_int)) != 15:
         raise RuntimeError("As dezenas sorteadas não são únicas (duplicadas).")
 
-    if any(d < 1 or d > 25 for d in dezenas_int):  # CORRIGIDO: &lt; substituído por <
+    if any(d < 1 or d > 25 for d in dezenas_int):
         raise RuntimeError("Há dezenas sorteadas fora do intervalo 1..25.")
 
     return sorted(dezenas_int)
 
 
 def calcular_premio_por_acertos(data: Dict[str, Any], acertos: int) -> float:
-    if acertos < 11 or acertos > 15:  # CORRIGIDO: &lt; substituído por <
+    if acertos < 11 or acertos > 15:
         return 0.0
 
     faixa_esperada = 16 - acertos
@@ -467,11 +479,11 @@ def parse_data_concurso(data: Dict[str, Any]) -> date:
 
 
 def exibir_conferencia_de_jogos(
-    titulo_bloco: str,
-    jogos: List[List[int]],
-    sorteadas: List[int],
-    data: Dict[str, Any],
-    prefixo_nome: str,
+        titulo_bloco: str,
+        jogos: List[List[int]],
+        sorteadas: List[int],
+        data: Dict[str, Any],
+        prefixo_nome: str,
 ) -> float:
     total_bloco = 0.0
     st.subheader(titulo_bloco)
@@ -552,7 +564,7 @@ def calcular_frequencia_no_periodo(dt_ini: date, dt_fim: date) -> Tuple[Dict[int
                 data = buscar_resultado(num)
                 dt_concurso = parse_data_concurso(data)
 
-                if dt_concurso < dt_ini:  # CORRIGIDO: &lt; substituído por <
+                if dt_concurso < dt_ini:
                     break
 
                 if dt_ini <= dt_concurso <= dt_fim:
@@ -590,6 +602,42 @@ def montar_jogo_por_frequencia(freq: Dict[int, int], qtd_dezenas: int, modo: str
     jogo = [dez for dez, _cnt in itens[:qtd_dezenas]]
 
     if len(jogo) != qtd_dezenas:
+        numeros_faltando = qtd_dezenas - len(jogo)
+        numeros_disponiveis = [n for n in range(1, 26) if n not in jogo]
+        jogo.extend(random.sample(numeros_disponiveis, numeros_faltando))
+
+    return sorted(jogo)
+
+
+def montar_jogo_combinado(freq: Dict[int, int], qtd_dezenas: int) -> List[int]:
+    """
+    Combina números mais sorteados e menos sorteados, removendo repetições.
+    """
+    if qtd_dezenas not in (15, 16):
+        raise RuntimeError("Quantidade de dezenas inválida (use 15 ou 16).")
+
+    if not freq or all(v == 0 for v in freq.values()):
+        return sorted(random.sample(range(1, 26), qtd_dezenas))
+
+    itens = list(freq.items())
+
+    # Mais sorteados (top metade)
+    itens_mais = sorted(itens, key=lambda x: (-x[1], x[0]))[:qtd_dezenas // 2]
+
+    # Menos sorteados (top metade)
+    itens_menos = sorted(itens, key=lambda x: (x[1], x[0]))[:qtd_dezenas // 2]
+
+    # Combinar sem repetições
+    jogo_set = set()
+    for dez, _ in itens_mais + itens_menos:
+        jogo_set.add(dez)
+        if len(jogo_set) >= qtd_dezenas:
+            break
+
+    jogo = sorted(list(jogo_set))
+
+    # Completar com números aleatórios se necessário
+    if len(jogo) < qtd_dezenas:
         numeros_faltando = qtd_dezenas - len(jogo)
         numeros_disponiveis = [n for n in range(1, 26) if n not in jogo]
         jogo.extend(random.sample(numeros_disponiveis, numeros_faltando))
@@ -707,7 +755,6 @@ with st.container(border=True):
             except Exception as e:
                 st.error(f"Erro: {e}")
 
-
 # --- Histórico ---
 with st.expander("📅 Histórico", expanded=False):
     c1, c2 = st.columns(2)
@@ -762,7 +809,7 @@ with st.expander("📅 Histórico", expanded=False):
                             data = buscar_resultado(num)
                             dt_concurso = parse_data_concurso(data)
 
-                            if dt_concurso < dt_ini:  # CORRIGIDO: &lt; substituído por <
+                            if dt_concurso < dt_ini:
                                 break
 
                             if dt_ini <= dt_concurso <= dt_fim:
@@ -864,12 +911,11 @@ with st.expander("📅 Histórico", expanded=False):
                         st.caption(f"Extras (prêmios): {formatar_moeda_br(total_extras)}")
                         st.caption(f"Bruto: {formatar_moeda_br(total_dia_bruto)}")
 
-            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):  # CORRIGIDO: &lt; substituído por <
+            if (i + 1) % cols_per_row == 0 and (i + 1) < len(dias):
                 cols = st.columns(cols_per_row)
 
         st.subheader("Total no período")
         st.metric("Total (líquido)", formatar_moeda_br(total_periodo))
-
 
 # --- Sugestão de jogos ---
 with st.expander("📊 Sugestão de jogos", expanded=False):
@@ -908,16 +954,25 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
 
                         jogo_mais = montar_jogo_por_frequencia(freq, qtd_dezenas=qtd_dezenas, modo="mais")
                         jogo_menos = montar_jogo_por_frequencia(freq, qtd_dezenas=qtd_dezenas, modo="menos")
+                        jogo_combinado = montar_jogo_combinado(freq, qtd_dezenas=qtd_dezenas)
 
-                        c_left, c_right = st.columns(2)
-                        with c_left:
+                        # Layout em 3 colunas para os 3 tipos de jogos
+                        col1, col2, col3 = st.columns(3)
+
+                        with col1:
                             with st.container(border=True):
                                 st.subheader("Mais sorteados")
                                 render_chips(jogo_mais, variant="ok")
-                        with c_right:
+
+                        with col2:
                             with st.container(border=True):
                                 st.subheader("Menos sorteados")
                                 render_chips(jogo_menos, variant="bad")
+
+                        with col3:
+                            with st.container(border=True):
+                                st.subheader("Combinado")
+                                render_chips(jogo_combinado, variant="combinado")
 
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
