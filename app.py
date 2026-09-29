@@ -7,7 +7,7 @@ import random
 
 # --- Configuração da Página ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("VERSAO-TESTE-2026-09-29-V14-HEADERS-FIX")
+st.write("VERSAO-TESTE-2026-09-29-V15-API-ALTERNATIVA")
 
 # Cálculo do primeiro dia do mês atual
 PRIMEIRO_DIA_MES = date.today().replace(day=1)
@@ -27,6 +27,7 @@ EXTRA_GAMES: List[List[int]] = [
 ]
 
 BASE_URLS: List[str] = [
+    "https://loteriascaixa-api.herokuapp.com/api/lotofacil",  # API alternativa (sem bloqueio 403)
     "https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil",
     "https://www.caixa.gov.br/loterias/_cache/webapi/lotofacil",
 ]
@@ -409,7 +410,6 @@ def _to_float_brasil(valor: Any) -> float:
 
 
 def _headers() -> Dict[str, str]:
-    # CORREÇÃO DO ERRO 403: cabeçalhos que simulam um navegador real
     return {
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
@@ -428,12 +428,26 @@ def _is_json_response(resp: requests.Response) -> bool:
     return "json" in content_type
 
 
+def _normalizar_dados(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Adapta o formato da API alternativa para o formato usado pelo app."""
+    if "dezenas" in data and "listaDezenas" not in data:
+        data["listaDezenas"] = data["dezenas"]
+    if "premiacoes" in data and "listaRateioPremio" not in data:
+        data["listaRateioPremio"] = data["premiacoes"]
+    if "concurso" in data and "numero" not in data:
+        data["numero"] = data["concurso"]
+    return data
+
+
 @st.cache_data(ttl=3600)
 def buscar_resultado(concurso: Optional[int]) -> Dict[str, Any]:
     last_error: Optional[Exception] = None
 
     for base in BASE_URLS:
-        url = base if concurso is None else f"{base}/{concurso}"
+        if concurso is None:
+            url = f"{base}/latest" if "loteriascaixa-api" in base else base
+        else:
+            url = f"{base}/{concurso}"
         try:
             r = requests.get(url, headers=_headers(), timeout=20)
             r.raise_for_status()
@@ -441,7 +455,7 @@ def buscar_resultado(concurso: Optional[int]) -> Dict[str, Any]:
             if not _is_json_response(r):
                 raise RuntimeError("A resposta não veio em JSON (content-type inesperado).")
 
-            data = r.json()
+            data = _normalizar_dados(r.json())
 
             if any(k in data for k in ("dezenasSorteadasOrdemSorteio", "listaDezenas", "dezenasSorteadas")):
                 return data
