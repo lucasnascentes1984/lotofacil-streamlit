@@ -7,7 +7,7 @@ import random
 
 # --- Configuração da Página ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("VERSAO-TESTE-2026-09-29-V15-API-ALTERNATIVA")
+st.write("Desenvolvido por Lucas Nascentes")
 
 # Cálculo do primeiro dia do mês atual
 PRIMEIRO_DIA_MES = date.today().replace(day=1)
