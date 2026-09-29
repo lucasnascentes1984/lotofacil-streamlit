@@ -7,7 +7,7 @@ import random
 
 # --- Configuração da Página ---
 st.set_page_config(page_title="Lotofácil 2026", layout="centered")
-st.write("Feito por: Lucas Nascentes")
+st.write("VERSAO-TESTE-2026-09-29-V14-HEADERS-FIX")
 
 # Cálculo do primeiro dia do mês atual
 PRIMEIRO_DIA_MES = date.today().replace(day=1)
@@ -223,12 +223,12 @@ def aplicar_tema_visual(modo: str):
           }}
 
           /* Chips (Bolinhas) - AUMENTADAS */
-          .chip-wrap{{ 
-              display:flex; 
-              flex-wrap:wrap; 
-              gap: 12px; 
-              margin: 20px 0; 
-              justify-content: center; 
+          .chip-wrap{{
+              display:flex;
+              flex-wrap:wrap;
+              gap: 12px;
+              margin: 20px 0;
+              justify-content: center;
           }}
           .chip{{
             width:50px; height:50px;
@@ -280,22 +280,22 @@ def aplicar_tema_visual(modo: str):
              color: #fde047;
           }}
 
-          /* CORES DOS CHIPS - Jogos 16/9 */
-          .chip--jogos-mais{{
+          /* CORES DOS CHIPS - MÉTODO 16/9 */
+          .chip--metodo-mais{{
             border:1px solid rgba(59, 130, 246, 0.4);
             background: rgba(59, 130, 246, 0.15);
             color: #1d4ed8;
           }}
-          .stApp[data-theme="dark"] .chip--jogos-mais {{
+          .stApp[data-theme="dark"] .chip--metodo-mais {{
              color: #93c5fd;
           }}
 
-          .chip--jogos-menos{{
+          .chip--metodo-menos{{
             border:1px solid rgba(249, 115, 22, 0.4);
             background: rgba(249, 115, 22, 0.15);
             color: #ea580c;
           }}
-          .stApp[data-theme="dark"] .chip--jogos-menos {{
+          .stApp[data-theme="dark"] .chip--metodo-menos {{
              color: #fdba74;
           }}
 
@@ -363,10 +363,10 @@ def render_chips(nums: List[int], variant: str = "default"):
         cls += " chip--muted"
     elif variant == "combinado":
         cls += " chip--combinado"
-    elif variant == "jogos-mais":
-        cls += " chip--jogos-mais"
-    elif variant == "jogos-menos":
-        cls += " chip--jogos-menos"
+    elif variant == "metodo-mais":
+        cls += " chip--metodo-mais"
+    elif variant == "metodo-menos":
+        cls += " chip--metodo-menos"
 
     html = '<div class="chip-wrap">' + "".join(
         f'<span class="{cls}">{n:02d}</span>' for n in nums
@@ -409,7 +409,18 @@ def _to_float_brasil(valor: Any) -> float:
 
 
 def _headers() -> Dict[str, str]:
-    return {"Accept": "application/json", "User-Agent": "Mozilla/5.0"}
+    # CORREÇÃO DO ERRO 403: cabeçalhos que simulam um navegador real
+    return {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/126.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://loterias.caixa.gov.br/",
+        "Origin": "https://loterias.caixa.gov.br",
+    }
 
 
 def _is_json_response(resp: requests.Response) -> bool:
@@ -445,9 +456,9 @@ def buscar_resultado(concurso: Optional[int]) -> Dict[str, Any]:
 
 def extrair_dezenas_sorteadas(data: Dict[str, Any]) -> List[int]:
     dezenas = (
-            data.get("dezenasSorteadasOrdemSorteio")
-            or data.get("listaDezenas")
-            or data.get("dezenasSorteadas")
+        data.get("dezenasSorteadasOrdemSorteio")
+        or data.get("listaDezenas")
+        or data.get("dezenasSorteadas")
     )
 
     if not dezenas or not isinstance(dezenas, list):
@@ -502,11 +513,11 @@ def parse_data_concurso(data: Dict[str, Any]) -> date:
 
 
 def exibir_conferencia_de_jogos(
-        titulo_bloco: str,
-        jogos: List[List[int]],
-        sorteadas: List[int],
-        data: Dict[str, Any],
-        prefixo_nome: str,
+    titulo_bloco: str,
+    jogos: List[List[int]],
+    sorteadas: List[int],
+    data: Dict[str, Any],
+    prefixo_nome: str,
 ) -> float:
     total_bloco = 0.0
     st.subheader(titulo_bloco)
@@ -668,7 +679,7 @@ def montar_jogo_combinado(freq: Dict[int, int], qtd_dezenas: int) -> List[int]:
     return sorted(jogo)
 
 
-def montar_jogos_16_9(freq: Dict[int, int]) -> Tuple[List[int], List[int]]:
+def montar_metodo_16_9(freq: Dict[int, int]) -> Tuple[List[int], List[int]]:
     """
     Retorna 16 números mais sorteados e 9 números menos sorteados.
     """
@@ -692,8 +703,7 @@ def montar_jogos_16_9(freq: Dict[int, int]) -> Tuple[List[int], List[int]]:
 
     return sorted(mais_sorteados), sorted(menos_sorteados)
 
-
-# --- TELA INICIAL DE SELEÇÃO DE TEMA ---
+                # --- TELA INICIAL DE SELEÇÃO DE TEMA ---
 if "tema_selecionado" not in st.session_state:
     st.session_state["tema_selecionado"] = None
 
@@ -802,6 +812,7 @@ with st.container(border=True):
 
             except Exception as e:
                 st.error(f"Erro: {e}")
+
 
 # --- Histórico ---
 with st.expander("📅 Histórico", expanded=False):
@@ -965,6 +976,7 @@ with st.expander("📅 Histórico", expanded=False):
         st.subheader("Total no período")
         st.metric("Total (líquido)", formatar_moeda_br(total_periodo))
 
+
 # --- Sugestão de jogos ---
 with st.expander("📊 Sugestão de jogos", expanded=False):
     a1, a2 = st.columns(2)
@@ -1025,40 +1037,54 @@ with st.expander("📊 Sugestão de jogos", expanded=False):
                 except Exception as e:
                     st.error(f"Erro na análise: {e}")
 
-    # --- JOGOS 16/9 ---
+    # --- MÉTODO 16/9 ---
     st.markdown("---")
-    st.subheader("🎯 Jogos 16/9")
+    st.subheader("🎯 Método 16/9")
 
-    if st.button("Gerar Jogos 16/9"):
+    if st.button("Gerar Método 16/9"):
         if analise_ini > analise_fim:
             st.error("A **Data inicial** não pode ser maior que a **Data final**.")
         else:
-            with st.spinner("Calculando Jogos 16/9..."):
+            with st.spinner("Calculando Método 16/9..."):
                 try:
                     freq, concursos_encontrados = calcular_frequencia_no_periodo(analise_ini, analise_fim)
 
                     if concursos_encontrados == 0:
                         st.warning("Não encontrei concursos dentro do período selecionado.")
                     else:
-                        mais_sorteados, menos_sorteados = montar_jogos_16_9(freq)
+                        mais_sorteados, menos_sorteados = montar_metodo_16_9(freq)
 
+                        st.markdown("""
+                        **Como funciona:** 
+                        - **16 números mais sorteados** (azul): Maior probabilidade histórica
+                        - **9 números menos sorteados** (laranja): Podem "sair da seca"
+                        """)
 
                         col1, col2 = st.columns(2)
 
                         with col1:
                             with st.container(border=True):
                                 st.subheader("16 Mais Sorteados")
-                                st.caption(
-                                    f"Período: {analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}")
-                                render_chips(mais_sorteados, variant="jogos-mais")
+                                st.caption(f"Período: {analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}")
+                                render_chips(mais_sorteados, variant="metodo-mais")
 
                         with col2:
                             with st.container(border=True):
                                 st.subheader("9 Menos Sorteados")
-                                st.caption(
-                                    f"Período: {analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}")
-                                render_chips(menos_sorteados, variant="jogos-menos")
+                                st.caption(f"Período: {analise_ini.strftime('%d/%m/%Y')} a {analise_fim.strftime('%d/%m/%Y')}")
+                                render_chips(menos_sorteados, variant="metodo-menos")
 
+                        # Mostrar estatísticas
+                        st.markdown("---")
+                        col_stats1, col_stats2 = st.columns(2)
+
+                        with col_stats1:
+                            st.metric("Total de números", "25")
+                            st.caption("16 + 9 = 25 números")
+
+                        with col_stats2:
+                            st.metric("Cobertura", "100%")
+                            st.caption("Cobre todos os 25 números da Lotofácil")
 
                 except Exception as e:
-                    st.error(f"Erro no Jogos 16/9: {e}")
+                    st.error(f"Erro no Método 16/9: {e}")
